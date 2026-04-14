@@ -156,7 +156,7 @@
     .menu-edit-price { font-size: 0.8rem; color: var(--green); white-space: nowrap; }
     .menu-added-list { margin-top: 6px; min-height: 10px; }
 
-    .card-memo { font-size: 0.74rem; color: var(--muted); line-height: 1.55; margin-top: auto; padding: 8px 0 0; outline: none; cursor: text; border-radius: 4px; min-height: 1.5em; white-space: pre-wrap; word-break: break-word; transition: background 0.15s; }
+    .card-memo { font-size: 0.74rem; color: var(--muted); line-height: 1.55; margin-top: auto; padding: 8px 0 0; outline: none; cursor: text; border-radius: 4px; min-height: 1.5em; max-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; transition: background 0.15s; }
     .card-memo:empty::before { content: attr(data-placeholder); color: var(--muted); opacity: 0.35; pointer-events: none; }
     .card-memo:focus { background: rgba(255,255,255,0.04); padding: 5px 7px; margin: 8px -7px 0; }
 
@@ -243,14 +243,14 @@
     .h-more-btn { display: none; font-size: 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; width: 34px; height: 34px; cursor: pointer; color: var(--muted); align-items: center; justify-content: center; }
     .h-more-panel { display: none; position: absolute; top: 100%; right: 0; background: var(--surface-h); border: 1px solid var(--border-h); border-radius: 10px; padding: 6px; z-index: 60; flex-direction: column; gap: 4px; min-width: 150px; }
     .h-more-panel.open { display: flex; }
-    .h-stat-inline { font-size: 0.72rem; color: var(--muted); display: none; }
+    .h-stat-inline { display: none; font-size: 0.72rem; color: var(--muted); margin-top: 5px; letter-spacing: 0.02em; }
     .h-stat-inline strong { color: var(--text); font-weight: 700; }
 
     @media (max-width: 600px) {
       .app { padding: 0 12px 100px; }
       header { padding: 14px 0 0; flex-wrap: nowrap; align-items: center; gap: 10px; }
-      .header-badges { display: none; }          /* カウントは inline に移動 */
-      .h-stat-inline { display: inline; }
+      .header-badges { display: none; }
+      .h-stat-inline { display: block; }
       .logo p { display: none; }
       .h-more-btn { display: flex; flex-shrink: 0; }
       .h-desktop-btns { display: none !important; }
@@ -287,7 +287,8 @@
   <div class="app">
     <header>
       <div class="logo">
-        <h1>🍱 ランチの申し子 <span class="h-stat-inline"><strong id="stat-total-m">0</strong>件・訪問<strong id="stat-visited-m">0</strong></span></h1>
+        <h1>🍱 ランチの申し子</h1>
+        <p class="h-stat-inline"><strong id="stat-total-m">0</strong> 件 &nbsp;·&nbsp; 訪問済み <strong id="stat-visited-m">0</strong> 件</p>
         <p>オフィス近くのランチをコレクション</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
@@ -335,6 +336,7 @@
           <option value="name-asc">名前順</option>
           <option value="rating-desc">評価（高い順）</option>
           <option value="visit-desc">訪問回数（多い順）</option>
+          <option value="last-visit-desc">最近訪問（新しい順）</option>
           <option value="walk-asc">徒歩：近い順</option>
           <option value="walk-desc">徒歩：遠い順</option>
         </select>
@@ -680,8 +682,8 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">訪問回数</label>
-        <input class="form-input" id="edit-visit-count" type="number" min="0" placeholder="0">
+        <label class="form-label">訪問回数（訪問ログと自動連動）</label>
+        <select class="form-input" id="edit-visit-count"></select>
       </div>
       <div class="form-group">
         <label class="form-label">最終訪問日</label>
@@ -775,7 +777,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-14f';
+    const APP_VERSION = '2026-04-15a';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -986,6 +988,7 @@
           case 'name-asc':    return a.name.localeCompare(b.name, 'ja');
           case 'rating-desc': return (b.rating || 0) - (a.rating || 0);
           case 'visit-desc':  return (b.visitCount || 0) - (a.visitCount || 0);
+          case 'last-visit-desc': return (b.lastVisitedAt || '').localeCompare(a.lastVisitedAt || '');
           case 'walk-asc':    return (parseInt(a.walkTime) || 999) - (parseInt(b.walkTime) || 999);
           case 'walk-desc':   return (parseInt(b.walkTime) || 0)   - (parseInt(a.walkTime) || 0);
           default: return 0;
@@ -1421,6 +1424,13 @@
       });
     }
     buildHoursOptions();
+    (() => {
+      const sel = document.getElementById('edit-visit-count');
+      if (!sel) return;
+      let html = '';
+      for (let i = 0; i <= 20; i++) html += `<option value="${i}">${i}回</option>`;
+      sel.innerHTML = html;
+    })();
     function setHoursSelect(id, val) {
       const sel = document.getElementById(id);
       if (!sel || !val) return;
@@ -1696,6 +1706,11 @@
       if (!e.target.closest('#h-more-btn') && !e.target.closest('#h-more-panel')) {
         document.getElementById('h-more-panel').classList.remove('open');
       }
+    });
+
+    // ── Log note Enter key ───────────────────────────────────────
+    document.getElementById('log-note').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addLogEntry(); }
     });
 
     // ── Random crowd chips setup ─────────────────────────────────
