@@ -87,7 +87,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; padding-top: 20px; }
 
     /* Card */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; overflow: hidden; min-width: 0; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; overflow: hidden; min-width: 0; cursor: pointer; }
     .card:hover { border-color: var(--border-h); }
     .card-content { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
     .card.is-visited { border-left: 3px solid var(--green); }
@@ -411,6 +411,10 @@
             <button class="chip" data-val="4">★4以上</button>
             <button class="chip" data-val="3">★3以上</button>
           </div>
+        </div>
+        <div class="filter-row" id="tags-filter-row" style="display:none">
+          <span class="filter-label">タグ</span>
+          <div class="chips" id="chips-tags"></div>
         </div>
         <div class="filter-row">
           <span class="filter-label">混雑度</span>
@@ -777,7 +781,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-15a';
+    const APP_VERSION = '2026-04-15b';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -839,7 +843,7 @@
     let filters = {
       query: '', status: 'all', capacity: '',
       categories: new Set(), prices: new Set(), walks: new Set(), portions: new Set(),
-      crowds: new Set(), minRating: 0,
+      crowds: new Set(), tags: new Set(), minRating: 0,
     };
     let sortKey = 'added-desc';
     let filterOpen = false;
@@ -901,7 +905,7 @@
         + (filters.capacity ? 1 : 0)
         + filters.categories.size + filters.prices.size
         + filters.walks.size + filters.portions.size
-        + filters.crowds.size + (filters.minRating > 0 ? 1 : 0);
+        + filters.crowds.size + filters.tags.size + (filters.minRating > 0 ? 1 : 0);
       document.getElementById('filter-toggle').classList.toggle('active', n > 0);
       const badge = document.getElementById('filter-badge');
       badge.classList.toggle('show', n > 0);
@@ -952,13 +956,35 @@
       });
     });
 
+    function updateTagChips() {
+      const allTags = new Set();
+      items.forEach(item => (item.mains || []).forEach(t => { if (t) allTags.add(t); }));
+      const row = document.getElementById('tags-filter-row');
+      const container = document.getElementById('chips-tags');
+      if (!allTags.size) { row.style.display = 'none'; return; }
+      row.style.display = '';
+      const sorted = [...allTags].sort((a, b) => a.localeCompare(b, 'ja'));
+      container.innerHTML = sorted.map(tag =>
+        `<button class="chip${filters.tags.has(tag) ? ' on' : ''}" data-tag="${esc(tag)}">${esc(tag)}</button>`
+      ).join('');
+      container.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tag = btn.dataset.tag;
+          btn.classList.toggle('on');
+          if (btn.classList.contains('on')) filters.tags.add(tag);
+          else filters.tags.delete(tag);
+          updateFilterBadge(); render();
+        });
+      });
+    }
+
     function resetFilters() {
       filters.status = 'all'; filters.capacity = ''; filters.minRating = 0;
       filters.categories.clear(); filters.prices.clear();
-      filters.walks.clear(); filters.portions.clear(); filters.crowds.clear();
+      filters.walks.clear(); filters.portions.clear(); filters.crowds.clear(); filters.tags.clear();
       document.getElementById('chips-status').querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b.dataset.val === 'all'));
-      ['chips-category','chips-price','chips-walk','chips-portion','chips-crowd','chips-rating'].forEach(id =>
-        document.getElementById(id).querySelectorAll('.chip').forEach(b => b.classList.remove('on'))
+      ['chips-category','chips-price','chips-walk','chips-portion','chips-crowd','chips-rating','chips-tags'].forEach(id =>
+        document.getElementById(id)?.querySelectorAll('.chip').forEach(b => b.classList.remove('on'))
       );
       document.getElementById('quick-capacity').querySelectorAll('.quick-chip').forEach(b => b.classList.toggle('on', b.dataset.val === ''));
       updateFilterBadge(); render();
@@ -1017,6 +1043,7 @@
         if (filters.walks.size > 0      && !filters.walks.has(item.walkTime))      return false;
         if (filters.portions.size > 0   && !filters.portions.has(item.portion))    return false;
         if (filters.crowds.size > 0     && !filters.crowds.has(item.crowd))        return false;
+        if (filters.tags.size > 0 && !(item.mains || []).some(t => filters.tags.has(t))) return false;
         if (filters.minRating > 0 && (item.rating || 0) < filters.minRating) return false;
         return true;
       });
@@ -1072,7 +1099,7 @@
         : '';
 
       return `
-        <div class="card${item.visited ? ' is-visited' : ''}" data-id="${item.id}">
+        <div class="card${item.visited ? ' is-visited' : ''}" data-id="${item.id}" onclick="openEditModal('${item.id}')">
           ${thumbHtml}
           <div class="cat-bar" data-cat="${esc(item.category || '')}"></div>
           <div class="card-content">
@@ -1141,6 +1168,7 @@
       grid.innerHTML = sorted.length
         ? sorted.map(cardHtml).join('')
         : `<div class="no-results">条件に一致するお店がありませんでした<br><span style="font-size:0.78rem">絞り込み条件を変えてみてください</span></div>`;
+      updateTagChips();
     }
 
     // ── saveMemo ─────────────────────────────────────────────────
