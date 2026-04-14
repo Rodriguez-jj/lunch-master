@@ -31,7 +31,7 @@
       --radius:   12px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; -webkit-text-size-adjust: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
     button { font-family: inherit; }
     .app { max-width: 1000px; margin: 0 auto; padding: 0 20px 100px; }
 
@@ -87,7 +87,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; padding-top: 20px; }
 
     /* Card */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; overflow: hidden; min-width: 0; }
     .card:hover { border-color: var(--border-h); }
     .card.is-visited { border-left: 3px solid var(--green); }
     .card-thumb { width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-h); flex-shrink: 0; }
@@ -106,16 +106,19 @@
     .cat-bar[data-cat="イタリアン"] { background: #22c55e; }
     .cat-bar[data-cat="その他"]    { background: #8b5cf6; }
 
-    .card-body { padding: 12px 14px 0; display: flex; flex-direction: column; flex: 1; }
+    .card-body { padding: 12px 14px 0; display: flex; flex-direction: column; flex: 1; min-width: 0; }
     .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 7px; }
     .card-badges { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
     .badge { font-size: 0.62rem; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
     .badge-cat      { background: var(--accent-d); color: var(--accent); }
-    .badge-price    { background: rgba(63,185,80,0.12); color: var(--green); }
-    .badge-unvisited{ background: rgba(88,166,255,0.12); color: var(--blue); }
+    .badge-price    { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .badge-unvisited{ background: rgba(255,255,255,0.04); color: var(--muted); }
     .badge-visited  { background: rgba(63,185,80,0.12); color: var(--green); }
-    .badge-cash     { background: rgba(248,81,73,0.12); color: var(--red); }
-    .badge-cashless { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .badge-cash     { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .badge-cashless { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .badge-crowd-low  { background: rgba(63,185,80,0.1);  color: #3fb950; }
+    .badge-crowd-mid  { background: rgba(245,158,11,0.1); color: var(--accent); }
+    .badge-crowd-high { background: rgba(248,81,73,0.1);  color: var(--red); }
 
     .card-top-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
     .card-walk { display: flex; align-items: center; gap: 3px; font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
@@ -193,6 +196,8 @@
     .pill { padding: 6px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-size: 0.78rem; font-family: inherit; cursor: pointer; transition: all 0.15s; }
     .pill:hover { border-color: var(--accent); color: var(--text); }
     .pill.on { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 700; }
+    /* 定休日は赤系（休業=赤） */
+    #add-closed .pill.on, #edit-closed .pill.on { background: rgba(248,81,73,0.15); border-color: rgba(248,81,73,0.5); color: #f87171; font-weight: 700; }
     /* Star rating input */
     .star-input { display: flex; gap: 4px; }
     .star-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--border-h); transition: color 0.1s; padding: 0 2px; line-height: 1; }
@@ -239,8 +244,10 @@
       .header-badges { flex-wrap: wrap; }
       .fab { bottom: 22px; right: 16px; width: 52px; height: 52px; font-size: 1.5rem; }
       .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .card-body { padding: 10px 11px 0; }
-      .card-name { font-size: 0.88rem; }
+      .card-body { padding: 10px 10px 0; }
+      .card-name { font-size: 0.85rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .card-badges { gap: 3px; }
+      .badge { font-size: 0.58rem; padding: 2px 5px; }
       /* Toolbar: search full-width on row 1, random+sort on row 2 */
       .toolbar-row { flex-wrap: wrap; gap: 8px; }
       .search-wrap { width: 100%; flex: none; order: 0; }
@@ -370,6 +377,17 @@
             <button class="chip" data-val="3">★3以上</button>
           </div>
         </div>
+        <div class="filter-row">
+          <span class="filter-label">混雑度</span>
+          <div class="chips" id="chips-crowd">
+            <button class="chip" data-val="low">🟢 ほぼ待ちなし</button>
+            <button class="chip" data-val="mid">🟡 少々待ちあり</button>
+            <button class="chip" data-val="high">🔴 ピーク時は厳しい</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;padding-top:4px">
+          <button onclick="resetFilters()" style="font-size:0.72rem;color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit">絞り込みをリセット</button>
+        </div>
       </div>
     </div>
 
@@ -390,7 +408,7 @@
         <label class="form-label">食べログ・URLなど</label>
         <input class="form-input" id="add-url" type="url" placeholder="https://tabelog.com/...">
       </div>
-      <div class="form-group" id="add-img-group" style="display:none">
+      <div class="form-group" id="add-img-group">
         <label class="form-label">画像URL（自動取得 / 手動変更可）</label>
         <input class="form-input" id="add-img" type="url" placeholder="https://...">
       </div>
@@ -459,8 +477,16 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">営業時間</label>
-        <input class="form-input" id="add-hours" placeholder="例: 11:00〜14:00">
+        <label class="form-label">混雑度</label>
+        <div class="pill-group" id="add-crowd">
+          <button class="pill" data-val="low">🟢 ほぼ待ちなし</button>
+          <button class="pill" data-val="mid">🟡 少々待ちあり</button>
+          <button class="pill" data-val="high">🔴 ピーク時は厳しい</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">開店時間</label>
+        <select class="form-input" id="add-hours"></select>
       </div>
       <div class="form-group">
         <label class="form-label">定休日</label>
@@ -477,9 +503,9 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">メイン料理（Enterまたは「追加」で追加）</label>
+        <label class="form-label">タグ（検索・絞り込みに使えます）</label>
         <div class="tag-input-row">
-          <input class="form-input" id="add-main-input" placeholder="例: 肉、定食">
+          <input class="form-input" id="add-main-input" placeholder="例: 肉、辛い、定食">
           <button class="btn-tag-add" onclick="addTag('add-mains','add-main-input')">追加</button>
         </div>
         <div class="tags-edit" id="add-mains"></div>
@@ -595,8 +621,16 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">営業時間</label>
-        <input class="form-input" id="edit-hours" placeholder="例: 11:00〜14:00">
+        <label class="form-label">混雑度</label>
+        <div class="pill-group" id="edit-crowd">
+          <button class="pill" data-val="low">🟢 ほぼ待ちなし</button>
+          <button class="pill" data-val="mid">🟡 少々待ちあり</button>
+          <button class="pill" data-val="high">🔴 ピーク時は厳しい</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">開店時間</label>
+        <select class="form-input" id="edit-hours"></select>
       </div>
       <div class="form-group">
         <label class="form-label">定休日</label>
@@ -621,9 +655,9 @@
         <input class="form-input" id="edit-last-visited" type="date">
       </div>
       <div class="form-group">
-        <label class="form-label">メイン料理</label>
+        <label class="form-label">タグ（検索・絞り込みに使えます）</label>
         <div class="tag-input-row">
-          <input class="form-input" id="edit-main-input" placeholder="例: 肉、定食">
+          <input class="form-input" id="edit-main-input" placeholder="例: 肉、辛い、定食">
           <button class="btn-tag-add" onclick="addTag('edit-mains','edit-main-input')">追加</button>
         </div>
         <div class="tags-edit" id="edit-mains"></div>
@@ -682,7 +716,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-14d';
+    const APP_VERSION = '2026-04-14e';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -744,7 +778,7 @@
     let filters = {
       query: '', status: 'all', capacity: '',
       categories: new Set(), prices: new Set(), walks: new Set(), portions: new Set(),
-      minRating: 0,
+      crowds: new Set(), minRating: 0,
     };
     let sortKey = 'added-desc';
     let filterOpen = false;
@@ -782,6 +816,20 @@
       }
     });
 
+    // ── Double-tap link ──────────────────────────────────────────
+    let lastTapUrl = null, lastTapTime = 0;
+    function tapLink(url) {
+      if (!url) return;
+      const now = Date.now();
+      if (lastTapUrl === url && now - lastTapTime < 1500) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        lastTapUrl = null; lastTapTime = 0;
+      } else {
+        lastTapUrl = url; lastTapTime = now;
+        toast('もう一度タップでリンクを開きます 🔗');
+      }
+    }
+
     // ── Filter helpers ───────────────────────────────────────────
     function toggleFilterPanel() {
       filterOpen = !filterOpen;
@@ -792,7 +840,7 @@
         + (filters.capacity ? 1 : 0)
         + filters.categories.size + filters.prices.size
         + filters.walks.size + filters.portions.size
-        + (filters.minRating > 0 ? 1 : 0);
+        + filters.crowds.size + (filters.minRating > 0 ? 1 : 0);
       document.getElementById('filter-toggle').classList.toggle('active', n > 0);
       const badge = document.getElementById('filter-badge');
       badge.classList.toggle('show', n > 0);
@@ -843,11 +891,24 @@
       });
     });
 
+    function resetFilters() {
+      filters.status = 'all'; filters.capacity = ''; filters.minRating = 0;
+      filters.categories.clear(); filters.prices.clear();
+      filters.walks.clear(); filters.portions.clear(); filters.crowds.clear();
+      document.getElementById('chips-status').querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b.dataset.val === 'all'));
+      ['chips-category','chips-price','chips-walk','chips-portion','chips-crowd','chips-rating'].forEach(id =>
+        document.getElementById(id).querySelectorAll('.chip').forEach(b => b.classList.remove('on'))
+      );
+      document.getElementById('quick-capacity').querySelectorAll('.quick-chip').forEach(b => b.classList.toggle('on', b.dataset.val === ''));
+      updateFilterBadge(); render();
+    }
+
     setupChipsSingle('chips-status',   'status');
     setupChipsMulti ('chips-category', 'categories');
     setupChipsMulti ('chips-price',    'prices');
     setupChipsMulti ('chips-walk',     'walks');
     setupChipsMulti ('chips-portion',  'portions');
+    setupChipsMulti ('chips-crowd',    'crowds');
     setupChipsRating('chips-rating');
 
     // ── Search / Sort ────────────────────────────────────────────
@@ -893,6 +954,7 @@
         if (filters.prices.size > 0     && !filters.prices.has(item.price))        return false;
         if (filters.walks.size > 0      && !filters.walks.has(item.walkTime))      return false;
         if (filters.portions.size > 0   && !filters.portions.has(item.portion))    return false;
+        if (filters.crowds.size > 0     && !filters.crowds.has(item.crowd))        return false;
         if (filters.minRating > 0 && (item.rating || 0) < filters.minRating) return false;
         return true;
       });
@@ -920,17 +982,20 @@
         ? `<div class="visit-meta">${item.visitCount ? `<span>🔁 ${item.visitCount}回</span>` : ''}${item.lastVisitedAt ? `<span>📅 ${item.lastVisitedAt}</span>` : ''}</div>`
         : '';
 
-      const hoursHtml = (item.hours || item.closed)
-        ? `<div class="card-hours">${item.hours ? `🕐 ${esc(item.hours)}` : ''}${item.hours && item.closed ? '　' : ''}${item.closed ? `🚫 ${esc(item.closed)}` : ''}</div>`
+      const hoursDisp = item.hours ? (item.hours.includes('〜') ? item.hours : item.hours + '〜') : '';
+      const crowdHtml = item.crowd === 'low'  ? `<span class="badge badge-crowd-low">🟢 ほぼ待ちなし</span>`
+                      : item.crowd === 'mid'  ? `<span class="badge badge-crowd-mid">🟡 少々待ちあり</span>`
+                      : item.crowd === 'high' ? `<span class="badge badge-crowd-high">🔴 ピーク時は厳しい</span>`
+                      : '';
+      const hoursHtml = (hoursDisp || item.closed)
+        ? `<div class="card-hours">${hoursDisp ? `🕐 ${esc(hoursDisp)}` : ''}${hoursDisp && item.closed ? '　' : ''}${item.closed ? `🚫 ${esc(item.closed)}` : ''}</div>`
         : '';
 
+      const linkS = item.url ? `<div data-url="${esc(item.url)}" onclick="event.stopPropagation();tapLink(this.dataset.url)" style="cursor:pointer">` : '';
+      const linkE = item.url ? '</div>' : '';
       const thumbHtml = item.image
-        ? item.url
-          ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block"><div class="card-thumb"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div></a>`
-          : `<div class="card-thumb"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
-        : item.url
-          ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block"><div class="card-placeholder" data-cat="${esc(item.category || '')}">${CAT_EMOJI[item.category] || '🍽'}</div></a>`
-          : `<div class="card-placeholder" data-cat="${esc(item.category || '')}">${CAT_EMOJI[item.category] || '🍽'}</div>`;
+        ? `${linkS}<div class="card-thumb"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>${linkE}`
+        : `${linkS}<div class="card-placeholder" data-cat="${esc(item.category || '')}">${CAT_EMOJI[item.category] || '🍽'}</div>${linkE}`;
 
       const infoRow = (item.capacity || item.portion)
         ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
@@ -951,6 +1016,7 @@
                 ${item.category ? `<span class="badge badge-cat">${esc(CAT_LBL[item.category]||item.category)}</span>` : ''}
                 ${item.price    ? `<span class="badge badge-price">${esc(PRICE_LBL[item.price]||item.price)}</span>` : ''}
                 <span class="badge ${item.visited?'badge-visited':'badge-unvisited'}">${item.visited?'✓ 訪問済み':'未訪問'}</span>
+                ${crowdHtml}
                 ${item.payment==='cash' ? `<span class="badge badge-cash">💴 現金のみ</span>`
                   : item.payment==='cashless-paypay' ? `<span class="badge badge-cashless">💳 PayPay 可</span>`
                   : item.payment==='cashless' ? `<span class="badge badge-cashless">💳 キャッシュレス</span>` : ''}
@@ -1180,8 +1246,8 @@
         });
       });
     }
-    ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment',
-     'edit-category','edit-price','edit-capacity','edit-walk','edit-portion','edit-payment'].forEach(setupPills);
+    ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment','add-crowd',
+     'edit-category','edit-price','edit-capacity','edit-walk','edit-portion','edit-payment','edit-crowd'].forEach(setupPills);
 
     // Multi-select pill group (定休日)
     function setupPillsMulti(groupId) {
@@ -1252,6 +1318,33 @@
     setupStarInput('add-rating');
     setupStarInput('edit-rating');
 
+    // ── Hours select ─────────────────────────────────────────────
+    function buildHoursOptions() {
+      ['add-hours','edit-hours'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        let html = '<option value="">未設定</option>';
+        for (let h = 8; h <= 23; h++) {
+          for (const m of [0, 30]) {
+            if (h === 23 && m === 30) continue;
+            const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+            html += `<option value="${t}">${t}〜</option>`;
+          }
+        }
+        sel.innerHTML = html;
+      });
+    }
+    buildHoursOptions();
+    function setHoursSelect(id, val) {
+      const sel = document.getElementById(id);
+      if (!sel || !val) return;
+      sel.value = val;
+      if (!sel.value) {
+        const m = val.match(/^(\d{1,2}:\d{2})/);
+        if (m) sel.value = m[1].padStart(5, '0');
+      }
+    }
+
     // ── Export / Import ──────────────────────────────────────────
     function exportData() {
       const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
@@ -1282,13 +1375,13 @@
 
     // ── Add Modal ────────────────────────────────────────────────
     function openAddModal() {
-      ['add-name','add-url','add-img','add-memo','add-hours'].forEach(id =>
+      ['add-name','add-url','add-img','add-memo'].forEach(id =>
         document.getElementById(id).value = ''
       );
-      document.getElementById('add-img-group').style.display = 'none';
+      document.getElementById('add-hours').value = '';
       document.getElementById('add-visited').checked  = false;
       document.getElementById('add-bookmark').checked = false;
-      ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment','add-closed'].forEach(id =>
+      ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment','add-crowd','add-closed'].forEach(id =>
         document.getElementById(id).querySelectorAll('.pill').forEach(b => b.classList.remove('on'))
       );
       setStarRating('add-rating', 0);
@@ -1314,8 +1407,9 @@
         walkTime:     getPill('add-walk'),
         portion:      getPill('add-portion'),
         payment:      getPill('add-payment'),
+        crowd:        getPill('add-crowd'),
         rating:       getStarRating('add-rating') || null,
-        hours:        document.getElementById('add-hours').value.trim(),
+        hours:        document.getElementById('add-hours').value,
         closed:       getClosedDays('add-closed'),
         mains:        [...(modalTags['add-mains'] || [])],
         menus:        [...(modalTags['add-menus'] || [])],
@@ -1341,7 +1435,7 @@
       document.getElementById('edit-url').value    = item.url     || '';
       document.getElementById('edit-img').value    = item.image   || '';
       document.getElementById('edit-memo').value   = item.memo    || '';
-      document.getElementById('edit-hours').value        = item.hours   || '';
+      setHoursSelect('edit-hours', item.hours || '');
       document.getElementById('edit-visit-count').value  = item.visitCount || 0;
       document.getElementById('edit-last-visited').value = item.lastVisitedAt || '';
       document.getElementById('edit-bookmark').checked   = !!item.bookmark;
@@ -1352,6 +1446,7 @@
       setPill('edit-walk',     item.walkTime || '');
       setPill('edit-portion',  item.portion  || '');
       setPill('edit-payment',  item.payment  || '');
+      setPill('edit-crowd',    item.crowd    || '');
       setStarRating('edit-rating', item.rating || 0);
       modalTags['edit-mains'] = [...(item.mains || [])];
       modalTags['edit-menus'] = [...(item.menus || [])];
@@ -1379,8 +1474,9 @@
       item.walkTime = getPill('edit-walk');
       item.portion  = getPill('edit-portion');
       item.payment  = getPill('edit-payment');
+      item.crowd    = getPill('edit-crowd');
       item.rating   = getStarRating('edit-rating') || null;
-      item.hours         = document.getElementById('edit-hours').value.trim();
+      item.hours    = document.getElementById('edit-hours').value;
       item.closed        = getClosedDays('edit-closed');
       item.visitCount    = parseInt(document.getElementById('edit-visit-count').value) || 0;
       item.lastVisitedAt = document.getElementById('edit-last-visited').value || null;
@@ -1425,7 +1521,6 @@
       if (!url) return;
       const nameEl = document.getElementById('add-name');
       const imgEl  = document.getElementById('add-img');
-      const imgGrp = document.getElementById('add-img-group');
       if (nameEl.value && imgEl.value) return;
 
       if (isGoogleMapsUrl(url)) {
@@ -1439,7 +1534,7 @@
       const { title, image } = await fetchOGP(url);
       nameEl.placeholder = '例: 焼肉ランチ 山田';
       if (title && !nameEl.value) nameEl.value = title;
-      if (image && !imgEl.value) { imgEl.value = image; imgGrp.style.display = ''; }
+      if (image && !imgEl.value) imgEl.value = image;
     });
 
     // ── Init ─────────────────────────────────────────────────────
