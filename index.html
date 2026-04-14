@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ランチの申し子">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#0d1117">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>ランチの申し子</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface-h:#1c2128;
+      --border:   #30363d;
+      --border-h: #3d444d;
+      --text:     #e6edf3;
+      --muted:    #7d8590;
+      --accent:   #f59e0b;
+      --accent-d: rgba(245,158,11,0.15);
+      --green:    #3fb950;
+      --red:      #f85149;
+      --blue:     #58a6ff;
+      --radius:   12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; -webkit-text-size-adjust: 100%; }
+    button { font-family: inherit; }
+    .app { max-width: 1000px; margin: 0 auto; padding: 0 20px 100px; }
+
+    /* Header */
+    header { padding: 40px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .logo h1 { font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+    .logo p { margin-top: 5px; font-size: 0.72rem; color: var(--muted); }
+    .header-badges { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .h-badge { font-size: 0.72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; white-space: nowrap; }
+    .h-badge strong { color: var(--accent); font-weight: 700; }
+    .h-badge.hb-visited strong { color: var(--green); }
+    .btn-header { font-size: 0.72rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .btn-header:hover { color: var(--text); border-color: var(--accent); }
+
+    /* Toolbar */
+    .toolbar { padding: 18px 0 0; display: flex; flex-direction: column; gap: 10px; }
+    .toolbar-row { display: flex; gap: 10px; align-items: center; }
+    .search-wrap { position: relative; flex: 1; }
+    .search-wrap::before { content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; pointer-events: none; }
+    .search-input { width: 100%; padding: 10px 14px 10px 36px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+    .sort-select { flex-shrink: 0; padding: 10px 30px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 0.82rem; font-family: inherit; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: border-color 0.15s; }
+    .sort-select:focus { border-color: var(--accent); }
+    .btn-random { padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-size: 0.82rem; font-family: inherit; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .btn-random:hover { color: var(--text); border-color: var(--accent); }
+
+    /* Quick capacity row */
+    .quick-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .quick-label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .quick-chip { font-size: 0.72rem; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+    .quick-chip:hover { border-color: var(--accent); color: var(--text); }
+    .quick-chip.on { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 700; }
+
+    /* Filter toggle */
+    .filter-toggle { display: flex; align-items: center; gap: 7px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-size: 0.82rem; font-family: inherit; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .filter-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .filter-toggle.active { color: var(--accent); border-color: var(--accent); }
+    .filter-badge { background: var(--accent); color: #0d1117; border-radius: 10px; padding: 1px 6px; font-size: 0.68rem; font-weight: 700; display: none; }
+    .filter-badge.show { display: inline; }
+
+    /* Filter panel */
+    .filter-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: none; flex-direction: column; gap: 11px; }
+    .filter-panel.open { display: flex; }
+    .filter-row { display: flex; align-items: flex-start; gap: 10px; }
+    .filter-label { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; width: 52px; padding-top: 5px; line-height: 1.3; }
+    .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .chip { font-size: 0.72rem; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+    .chip.on { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 700; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; padding-top: 20px; }
+
+    /* Card */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; }
+    .card:hover { border-color: var(--border-h); }
+    .card.is-visited { border-left: 3px solid var(--green); }
+    .card-thumb { width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-h); flex-shrink: 0; }
+    .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-placeholder { width: 100%; height: 68px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius) var(--radius) 0 0; flex-shrink: 0; font-size: 1.8rem; opacity: 0.5; }
+    .card-placeholder[data-cat="和"]        { background: rgba(239,68,68,0.12); }
+    .card-placeholder[data-cat="洋"]        { background: rgba(59,130,246,0.12); }
+    .card-placeholder[data-cat="中"]        { background: rgba(234,179,8,0.12); }
+    .card-placeholder[data-cat="イタリアン"] { background: rgba(34,197,94,0.12); }
+    .card-placeholder[data-cat="その他"]    { background: rgba(139,92,246,0.12); }
+    .card-placeholder:not([data-cat])       { background: rgba(255,255,255,0.04); }
+    .cat-bar { height: 3px; flex-shrink: 0; }
+    .cat-bar[data-cat="和"]        { background: #ef4444; }
+    .cat-bar[data-cat="洋"]        { background: #3b82f6; }
+    .cat-bar[data-cat="中"]        { background: #eab308; }
+    .cat-bar[data-cat="イタリアン"] { background: #22c55e; }
+    .cat-bar[data-cat="その他"]    { background: #8b5cf6; }
+
+    .card-body { padding: 12px 14px 0; display: flex; flex-direction: column; flex: 1; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 7px; }
+    .card-badges { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+    .badge { font-size: 0.62rem; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+    .badge-cat      { background: var(--accent-d); color: var(--accent); }
+    .badge-price    { background: rgba(63,185,80,0.12); color: var(--green); }
+    .badge-unvisited{ background: rgba(88,166,255,0.12); color: var(--blue); }
+    .badge-visited  { background: rgba(63,185,80,0.12); color: var(--green); }
+    .badge-cash     { background: rgba(248,81,73,0.12); color: var(--red); }
+    .badge-cashless { background: rgba(88,166,255,0.12); color: var(--blue); }
+
+    .card-top-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .card-walk { display: flex; align-items: center; gap: 3px; font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+    .card-name { font-size: 1rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
+    .card-capacity { font-size: 0.72rem; color: var(--muted); }
+    .card-capacity strong { color: var(--text); }
+
+    /* Stars on card */
+    .star-row { display: flex; gap: 1px; margin-bottom: 4px; }
+    .star { font-size: 0.78rem; color: var(--accent); line-height: 1; }
+    .star.empty { color: var(--border-h); }
+
+    /* Visit meta */
+    .visit-meta { font-size: 0.65rem; color: var(--muted); margin-bottom: 5px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Hours */
+    .card-hours { font-size: 0.68rem; color: var(--muted); margin-bottom: 5px; line-height: 1.5; }
+
+    .tags-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 7px; }
+    .tag { font-size: 0.62rem; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+    .tag-main { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted); }
+
+    .menu-list-card { margin-bottom: 8px; }
+    .menu-list-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 4px; }
+    .menu-list-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; padding: 3px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+    .menu-list-row:last-child { border-bottom: none; }
+    .menu-list-name { color: var(--text); flex: 1; }
+    .menu-list-price { color: var(--green); white-space: nowrap; flex-shrink: 0; }
+    .menu-edit-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    .menu-edit-row:last-child { border-bottom: none; }
+    .menu-edit-name { flex: 1; font-size: 0.8rem; color: var(--text); }
+    .menu-edit-price { font-size: 0.8rem; color: var(--green); white-space: nowrap; }
+    .menu-added-list { margin-top: 6px; min-height: 10px; }
+
+    .card-memo { font-size: 0.74rem; color: var(--muted); line-height: 1.55; margin-top: auto; padding: 8px 0 0; outline: none; cursor: text; border-radius: 4px; min-height: 1.5em; white-space: pre-wrap; word-break: break-word; transition: background 0.15s; }
+    .card-memo:empty::before { content: attr(data-placeholder); color: var(--muted); opacity: 0.35; pointer-events: none; }
+    .card-memo:focus { background: rgba(255,255,255,0.04); padding: 5px 7px; margin: 8px -7px 0; }
+
+    /* Card actions */
+    .card-actions { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--border); margin-top: 10px; gap: 4px; }
+    .visit-check { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 0.78rem; color: var(--muted); transition: color 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .visit-check:hover { color: var(--text); }
+    .visit-check input[type="checkbox"] { display: none; }
+    .check-box { width: 16px; height: 16px; flex-shrink: 0; border: 1.5px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .visit-check input:checked + .check-box { background: var(--green); border-color: var(--green); }
+    .visit-check input:checked + .check-box::after { content: '✓'; color: #0d1117; font-size: 10px; font-weight: 900; line-height: 1; }
+    .visit-check input:checked ~ .check-label { color: var(--green); }
+    .card-icon-btns { display: flex; gap: 0; flex-shrink: 0; }
+    .btn-icon { width: 28px; height: 28px; border: none; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; font-size: 0.85rem; }
+    .btn-icon:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+    .btn-icon.danger:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+    .btn-icon.bm-on { color: var(--accent); }
+
+    /* FAB */
+    .fab { position: fixed; bottom: 30px; right: 24px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #0d1117; border: none; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(245,158,11,0.4); transition: transform 0.15s, box-shadow 0.15s; z-index: 50; }
+    .fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(245,158,11,0.5); }
+
+    /* Modal */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+    @media (min-width: 600px) { .overlay { align-items: center; } }
+    .modal { background: var(--surface-h); border: 1px solid var(--border-h); border-radius: 16px 16px 0 0; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 24px 20px 32px; transform: translateY(40px); transition: transform 0.25s cubic-bezier(.22,1,.36,1); }
+    @media (min-width: 600px) { .modal { border-radius: 16px; transform: scale(0.97); } }
+    .overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-label { display: block; font-size: 0.73rem; color: var(--muted); margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .form-textarea { width: 100%; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; outline: none; resize: vertical; min-height: 70px; transition: border-color 0.15s; }
+    .form-textarea:focus { border-color: var(--accent); }
+    .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill { padding: 6px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-size: 0.78rem; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .pill:hover { border-color: var(--accent); color: var(--text); }
+    .pill.on { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 700; }
+    /* Star rating input */
+    .star-input { display: flex; gap: 4px; }
+    .star-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--border-h); transition: color 0.1s; padding: 0 2px; line-height: 1; }
+    .star-btn.on { color: var(--accent); }
+    /* Tag input */
+    .tag-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .tag-input-row .form-input { flex: 1; }
+    .btn-tag-add { padding: 9px 13px; background: var(--accent); border: none; border-radius: 8px; color: #0d1117; font-weight: 700; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; }
+    .tags-edit { display: flex; gap: 5px; flex-wrap: wrap; min-height: 24px; }
+    .tag-edit { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
+    .tag-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 0 1px; line-height: 1; }
+    .tag-rm:hover { color: var(--red); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .btn-cancel { flex: 1; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; cursor: pointer; }
+    .btn-save { flex: 2; padding: 11px; background: var(--accent); border: none; border-radius: 8px; color: #0d1117; font-size: 0.88rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+
+    /* Random modal */
+    .random-img { width: 100%; border-radius: 8px; margin-bottom: 12px; max-height: 180px; object-fit: cover; display: block; }
+    .random-name { font-size: 1.25rem; font-weight: 900; text-align: center; margin-bottom: 8px; }
+    .random-stars { text-align: center; font-size: 1.1rem; margin-bottom: 8px; }
+    .random-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
+    .random-memo { font-size: 0.8rem; color: var(--muted); text-align: center; line-height: 1.5; }
+    .btn-reroll { width: 100%; margin-top: 14px; padding: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; cursor: pointer; transition: border-color 0.15s; }
+    .btn-reroll:hover { border-color: var(--accent); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--surface-h); border: 1px solid var(--border-h); border-radius: 8px; padding: 10px 18px; font-size: 0.82rem; z-index: 200; opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(.22,1,.36,1); white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Empty */
+    .empty { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .empty h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .empty p { font-size: 0.82rem; color: var(--muted); }
+    .no-results { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 0.88rem; line-height: 1.8; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-h); border-radius: 3px; }
+
+    @media (max-width: 600px) {
+      .app { padding: 0 12px 100px; }
+      header { padding: 20px 0 0; flex-wrap: wrap; }
+      .fab { bottom: 22px; right: 16px; width: 46px; height: 46px; font-size: 1.4rem; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .card-body { padding: 10px 11px 0; }
+      .card-name { font-size: 0.88rem; }
+      .sort-select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <h1>🍱 ランチの申し子</h1>
+        <p>オフィス近くのランチをコレクション</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+        <div class="header-badges">
+          <div class="h-badge"><strong id="stat-total">0</strong> 件</div>
+          <div class="h-badge hb-visited">訪問済み <strong id="stat-visited">0</strong></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-header" onclick="exportData()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v2h10v-2"/></svg>
+            エクスポート
+          </button>
+          <button class="btn-header" onclick="document.getElementById('import-input').click()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 9V1M4 4l3-3 3 3"/><path d="M2 10v2h10v-2"/></svg>
+            インポート
+          </button>
+          <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+        </div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <div class="search-wrap">
+          <input class="search-input" id="search" type="search" placeholder="店名・メモ・メニューで検索...">
+        </div>
+        <button class="btn-random" onclick="showRandom()">🎲 おまかせ</button>
+        <select class="sort-select" id="sort-select">
+          <option value="added-desc">追加順（新しい順）</option>
+          <option value="added-asc">追加順（古い順）</option>
+          <option value="name-asc">名前順</option>
+          <option value="rating-desc">評価（高い順）</option>
+          <option value="visit-desc">訪問回数（多い順）</option>
+          <option value="walk-asc">徒歩：近い順</option>
+          <option value="walk-desc">徒歩：遠い順</option>
+        </select>
+      </div>
+      <!-- Quick capacity -->
+      <div class="quick-row">
+        <span class="quick-label">何人？</span>
+        <div id="quick-capacity" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="quick-chip on" data-val="">指定なし</button>
+          <button class="quick-chip" data-val="1人">1人</button>
+          <button class="quick-chip" data-val="~2人">2人</button>
+          <button class="quick-chip" data-val="~3人">3人</button>
+          <button class="quick-chip" data-val="~4人">4人</button>
+          <button class="quick-chip" data-val="4人以上可">5人〜</button>
+        </div>
+      </div>
+      <button class="filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="14" height="14"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+        絞り込み
+        <span class="filter-badge" id="filter-badge">0</span>
+      </button>
+      <div class="filter-panel" id="filter-panel">
+        <div class="filter-row">
+          <span class="filter-label">状態</span>
+          <div class="chips" id="chips-status">
+            <button class="chip on" data-val="all">すべて</button>
+            <button class="chip" data-val="unvisited">未訪問</button>
+            <button class="chip" data-val="visited">訪問済み</button>
+            <button class="chip" data-val="bookmarked">⭐ お気に入り</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">カテゴリ</span>
+          <div class="chips" id="chips-category">
+            <button class="chip" data-val="和">和食</button>
+            <button class="chip" data-val="洋">洋食</button>
+            <button class="chip" data-val="中">中華</button>
+            <button class="chip" data-val="イタリアン">伊</button>
+            <button class="chip" data-val="その他">その他</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">価格帯</span>
+          <div class="chips" id="chips-price">
+            <button class="chip" data-val="~1000">〜¥1,000</button>
+            <button class="chip" data-val="~1500">〜¥1,500</button>
+            <button class="chip" data-val="~2000">〜¥2,000</button>
+            <button class="chip" data-val="2000+">¥2,000〜</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">徒歩</span>
+          <div class="chips" id="chips-walk">
+            <button class="chip" data-val="5">5分</button>
+            <button class="chip" data-val="10">10分</button>
+            <button class="chip" data-val="15">15分</button>
+            <button class="chip" data-val="15+">15分以上</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">量</span>
+          <div class="chips" id="chips-portion">
+            <button class="chip" data-val="heavy">がっつり</button>
+            <button class="chip" data-val="normal">ふつう</button>
+            <button class="chip" data-val="light">少なめ</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">評価</span>
+          <div class="chips" id="chips-rating">
+            <button class="chip" data-val="5">★5のみ</button>
+            <button class="chip" data-val="4">★4以上</button>
+            <button class="chip" data-val="3">★3以上</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <button class="fab" onclick="openAddModal()">＋</button>
+
+  <!-- Add Modal -->
+  <div class="overlay" id="add-overlay" onclick="if(event.target===this)closeAddModal()">
+    <div class="modal">
+      <div class="modal-title">お店を追加</div>
+      <div class="form-group">
+        <label class="form-label">店名 *</label>
+        <input class="form-input" id="add-name" placeholder="例: 焼肉ランチ 山田">
+      </div>
+      <div class="form-group">
+        <label class="form-label">食べログ・URLなど</label>
+        <input class="form-input" id="add-url" type="url" placeholder="https://tabelog.com/...">
+      </div>
+      <div class="form-group" id="add-img-group" style="display:none">
+        <label class="form-label">画像URL（自動取得 / 手動変更可）</label>
+        <input class="form-input" id="add-img" type="url" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <div class="pill-group" id="add-category">
+          <button class="pill" data-val="和">和食</button>
+          <button class="pill" data-val="洋">洋食</button>
+          <button class="pill" data-val="中">中華</button>
+          <button class="pill" data-val="イタリアン">イタリアン</button>
+          <button class="pill" data-val="その他">その他</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">価格帯</label>
+        <div class="pill-group" id="add-price">
+          <button class="pill" data-val="~1000">〜¥1,000</button>
+          <button class="pill" data-val="~1500">〜¥1,500</button>
+          <button class="pill" data-val="~2000">〜¥2,000</button>
+          <button class="pill" data-val="2000+">¥2,000〜</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">評価</label>
+        <div class="star-input" id="add-rating">
+          <button class="star-btn" data-val="1" type="button">★</button>
+          <button class="star-btn" data-val="2" type="button">★</button>
+          <button class="star-btn" data-val="3" type="button">★</button>
+          <button class="star-btn" data-val="4" type="button">★</button>
+          <button class="star-btn" data-val="5" type="button">★</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">適正人数</label>
+        <div class="pill-group" id="add-capacity">
+          <button class="pill" data-val="1人">1人</button>
+          <button class="pill" data-val="~2人">〜2人</button>
+          <button class="pill" data-val="~3人">〜3人</button>
+          <button class="pill" data-val="~4人">〜4人</button>
+          <button class="pill" data-val="4人以上可">4人以上可</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">徒歩時間</label>
+        <div class="pill-group" id="add-walk">
+          <button class="pill" data-val="5">5分</button>
+          <button class="pill" data-val="10">10分</button>
+          <button class="pill" data-val="15">15分</button>
+          <button class="pill" data-val="15+">15分以上</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">量</label>
+        <div class="pill-group" id="add-portion">
+          <button class="pill" data-val="heavy">がっつり</button>
+          <button class="pill" data-val="normal">ふつう</button>
+          <button class="pill" data-val="light">少なめ</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">支払い方法</label>
+        <div class="pill-group" id="add-payment">
+          <button class="pill" data-val="cash">現金のみ</button>
+          <button class="pill" data-val="cashless-paypay">キャッシュレス（PayPay あり）</button>
+          <button class="pill" data-val="cashless">キャッシュレス（PayPay なし）</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">営業時間</label>
+        <input class="form-input" id="add-hours" placeholder="例: 11:00〜14:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">定休日</label>
+        <div class="pill-group" id="add-closed">
+          <button class="pill" data-val="月">月</button>
+          <button class="pill" data-val="火">火</button>
+          <button class="pill" data-val="水">水</button>
+          <button class="pill" data-val="木">木</button>
+          <button class="pill" data-val="金">金</button>
+          <button class="pill" data-val="土">土</button>
+          <button class="pill" data-val="日">日</button>
+          <button class="pill" data-val="祝">祝</button>
+          <button class="pill" data-val="不定休">不定休</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">メイン料理（Enterまたは「追加」で追加）</label>
+        <div class="tag-input-row">
+          <input class="form-input" id="add-main-input" placeholder="例: 肉、定食">
+          <button class="btn-tag-add" onclick="addTag('add-mains','add-main-input')">追加</button>
+        </div>
+        <div class="tags-edit" id="add-mains"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">食べたメニュー</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="form-input" id="add-menu-input" placeholder="例: 唐揚げ定食" style="flex:2">
+          <input class="form-input" id="add-menu-price" type="number" placeholder="価格" style="flex:1;min-width:0">
+          <button class="btn-tag-add" onclick="addMenu('add-menus','add-menu-input','add-menu-price')">追加</button>
+        </div>
+        <div class="menu-added-list" id="add-menus"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">一言メモ</label>
+        <textarea class="form-textarea" id="add-memo" placeholder="特徴や雰囲気など..."></textarea>
+      </div>
+      <div class="form-group" style="display:flex;gap:20px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;cursor:pointer">
+          <input type="checkbox" id="add-visited" style="width:16px;height:16px;accent-color:var(--green)">
+          すでに訪問済み
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;cursor:pointer">
+          <input type="checkbox" id="add-bookmark" style="width:16px;height:16px;accent-color:var(--accent)">
+          ⭐ お気に入り
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAddModal()">キャンセル</button>
+        <button class="btn-save" id="add-save">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="overlay" id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-title">編集</div>
+      <div class="form-group">
+        <label class="form-label">店名 *</label>
+        <input class="form-input" id="edit-name" placeholder="店名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">食べログ・URLなど</label>
+        <input class="form-input" id="edit-url" type="url" placeholder="https://tabelog.com/...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">画像URL</label>
+        <input class="form-input" id="edit-img" type="url" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <div class="pill-group" id="edit-category">
+          <button class="pill" data-val="和">和食</button>
+          <button class="pill" data-val="洋">洋食</button>
+          <button class="pill" data-val="中">中華</button>
+          <button class="pill" data-val="イタリアン">イタリアン</button>
+          <button class="pill" data-val="その他">その他</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">価格帯</label>
+        <div class="pill-group" id="edit-price">
+          <button class="pill" data-val="~1000">〜¥1,000</button>
+          <button class="pill" data-val="~1500">〜¥1,500</button>
+          <button class="pill" data-val="~2000">〜¥2,000</button>
+          <button class="pill" data-val="2000+">¥2,000〜</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">評価</label>
+        <div class="star-input" id="edit-rating">
+          <button class="star-btn" data-val="1" type="button">★</button>
+          <button class="star-btn" data-val="2" type="button">★</button>
+          <button class="star-btn" data-val="3" type="button">★</button>
+          <button class="star-btn" data-val="4" type="button">★</button>
+          <button class="star-btn" data-val="5" type="button">★</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">適正人数</label>
+        <div class="pill-group" id="edit-capacity">
+          <button class="pill" data-val="1人">1人</button>
+          <button class="pill" data-val="~2人">〜2人</button>
+          <button class="pill" data-val="~3人">〜3人</button>
+          <button class="pill" data-val="~4人">〜4人</button>
+          <button class="pill" data-val="4人以上可">4人以上可</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">徒歩時間</label>
+        <div class="pill-group" id="edit-walk">
+          <button class="pill" data-val="5">5分</button>
+          <button class="pill" data-val="10">10分</button>
+          <button class="pill" data-val="15">15分</button>
+          <button class="pill" data-val="15+">15分以上</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">量</label>
+        <div class="pill-group" id="edit-portion">
+          <button class="pill" data-val="heavy">がっつり</button>
+          <button class="pill" data-val="normal">ふつう</button>
+          <button class="pill" data-val="light">少なめ</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">支払い方法</label>
+        <div class="pill-group" id="edit-payment">
+          <button class="pill" data-val="cash">現金のみ</button>
+          <button class="pill" data-val="cashless-paypay">キャッシュレス（PayPay あり）</button>
+          <button class="pill" data-val="cashless">キャッシュレス（PayPay なし）</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">営業時間</label>
+        <input class="form-input" id="edit-hours" placeholder="例: 11:00〜14:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">定休日</label>
+        <div class="pill-group" id="edit-closed">
+          <button class="pill" data-val="月">月</button>
+          <button class="pill" data-val="火">火</button>
+          <button class="pill" data-val="水">水</button>
+          <button class="pill" data-val="木">木</button>
+          <button class="pill" data-val="金">金</button>
+          <button class="pill" data-val="土">土</button>
+          <button class="pill" data-val="日">日</button>
+          <button class="pill" data-val="祝">祝</button>
+          <button class="pill" data-val="不定休">不定休</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">訪問回数</label>
+        <input class="form-input" id="edit-visit-count" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">最終訪問日</label>
+        <input class="form-input" id="edit-last-visited" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メイン料理</label>
+        <div class="tag-input-row">
+          <input class="form-input" id="edit-main-input" placeholder="例: 肉、定食">
+          <button class="btn-tag-add" onclick="addTag('edit-mains','edit-main-input')">追加</button>
+        </div>
+        <div class="tags-edit" id="edit-mains"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">食べたメニュー</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input class="form-input" id="edit-menu-input" placeholder="例: 唐揚げ定食" style="flex:2">
+          <input class="form-input" id="edit-menu-price" type="number" placeholder="価格" style="flex:1;min-width:0">
+          <button class="btn-tag-add" onclick="addMenu('edit-menus','edit-menu-input','edit-menu-price')">追加</button>
+        </div>
+        <div class="menu-added-list" id="edit-menus"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">一言メモ</label>
+        <textarea class="form-textarea" id="edit-memo" placeholder="特徴や雰囲気など..."></textarea>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;cursor:pointer">
+          <input type="checkbox" id="edit-bookmark" style="width:16px;height:16px;accent-color:var(--accent)">
+          ⭐ お気に入り
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+        <button class="btn-save" id="edit-save">保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="overlay" id="confirm-overlay">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-title">確認</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;line-height:1.6" id="confirm-msg"></p>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="confirm-cancel">キャンセル</button>
+        <button class="btn-save" id="confirm-ok" style="background:var(--red)">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Random Modal -->
+  <div class="overlay" id="random-overlay" onclick="if(event.target===this)closeRandom()">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-title">🎲 今日のおすすめ</div>
+      <div id="random-content"></div>
+      <button class="btn-reroll" onclick="rerollRandom()">もう一度</button>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="btn-cancel" onclick="closeRandom()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── バージョン管理 ────────────────────────────────────────────
+    const APP_VERSION = '2026-04-14c';
+    (() => {
+      const stored = localStorage.getItem('lunchlog_app_version');
+      if (stored && stored !== APP_VERSION) {
+        localStorage.setItem('lunchlog_app_version', APP_VERSION);
+        location.reload(true);
+      } else {
+        localStorage.setItem('lunchlog_app_version', APP_VERSION);
+      }
+    })();
+
+    // ── OGP 取得 ─────────────────────────────────────────────────
+    async function fetchWithTimeout(url, ms = 5000) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ms);
+      try {
+        const res = await fetch(url, { signal: ctrl.signal });
+        return await res.json();
+      } finally { clearTimeout(timer); }
+    }
+    function parseOGP(html) {
+      const m = s => { const r = html.match(s); return r ? r[1].trim() : ''; };
+      const title = m(/property="og:title"\s+content="([^"]+)"/)
+                 || m(/name="twitter:title"\s+content="([^"]+)"/)
+                 || m(/<title[^>]*>([^<]+)<\/title>/i) || '';
+      const image = m(/property="og:image"\s+content="([^"]+)"/)
+                 || m(/name="twitter:image"\s+content="([^"]+)"/) || '';
+      return { title, image };
+    }
+    async function fetchOGP(url) {
+      let title = '', image = '';
+      try {
+        const data = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+        if (data?.contents) ({ title, image } = parseOGP(data.contents));
+      } catch {}
+      if (title && image) return { title, image };
+      try {
+        const ml = await fetchWithTimeout(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
+        if (ml?.status === 'success') {
+          if (!title) title = ml.data.title || '';
+          if (!image) image = ml.data.image?.url || ml.data.logo?.url || '';
+        }
+      } catch {}
+      return { title, image };
+    }
+
+    // ── Storage ──────────────────────────────────────────────────
+    const KEY = 'lunchlog_v1';
+    let items = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } })();
+    const persist  = () => localStorage.setItem(KEY, JSON.stringify(items));
+    const todayStr = () => new Date().toISOString().slice(0, 10);
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    const CAP_ORDER  = { '1人': 1, '~2人': 2, '~3人': 3, '~4人': 4, '4人以上可': 5 };
+    const CAT_EMOJI  = { '和': '🍱', '洋': '🥩', '中': '🥟', 'イタリアン': '🍝', 'その他': '🍴' };
+    const PRICE_LBL  = { '~1000': '〜¥1,000', '~1500': '〜¥1,500', '~2000': '〜¥2,000', '2000+': '¥2,000〜' };
+    const CAT_LBL    = { '和': '和食', '洋': '洋食', '中': '中華', 'イタリアン': '伊', 'その他': 'その他' };
+
+    // ── Filter / Sort state ──────────────────────────────────────
+    let filters = {
+      query: '', status: 'all', capacity: '',
+      categories: new Set(), prices: new Set(), walks: new Set(), portions: new Set(),
+      minRating: 0,
+    };
+    let sortKey = 'added-desc';
+    let filterOpen = false;
+
+    // ── Toast ────────────────────────────────────────────────────
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    // ── Confirm ──────────────────────────────────────────────────
+    let confirmCallback = null;
+    function showConfirm(msg, onOk) {
+      document.getElementById('confirm-msg').textContent = msg;
+      document.getElementById('confirm-overlay').classList.add('open');
+      confirmCallback = onOk;
+    }
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('open');
+      confirmCallback = null;
+    });
+    document.getElementById('confirm-ok').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('open');
+      if (confirmCallback) confirmCallback();
+      confirmCallback = null;
+    });
+    document.getElementById('confirm-overlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('confirm-overlay').classList.remove('open');
+        confirmCallback = null;
+      }
+    });
+
+    // ── Filter helpers ───────────────────────────────────────────
+    function toggleFilterPanel() {
+      filterOpen = !filterOpen;
+      document.getElementById('filter-panel').classList.toggle('open', filterOpen);
+    }
+    function updateFilterBadge() {
+      const n = (filters.status !== 'all' ? 1 : 0)
+        + (filters.capacity ? 1 : 0)
+        + filters.categories.size + filters.prices.size
+        + filters.walks.size + filters.portions.size
+        + (filters.minRating > 0 ? 1 : 0);
+      document.getElementById('filter-toggle').classList.toggle('active', n > 0);
+      const badge = document.getElementById('filter-badge');
+      badge.classList.toggle('show', n > 0);
+      badge.textContent = n;
+    }
+
+    // Single-select chips (status)
+    function setupChipsSingle(groupId, filterKey) {
+      document.getElementById(groupId).querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById(groupId).querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+          btn.classList.add('on');
+          filters[filterKey] = btn.dataset.val;
+          updateFilterBadge(); render();
+        });
+      });
+    }
+    // Multi-select chips (toggle each independently)
+    function setupChipsMulti(groupId, filterSetKey) {
+      document.getElementById(groupId).querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.classList.toggle('on');
+          if (btn.classList.contains('on')) filters[filterSetKey].add(btn.dataset.val);
+          else filters[filterSetKey].delete(btn.dataset.val);
+          updateFilterBadge(); render();
+        });
+      });
+    }
+    // Rating single-select (min rating)
+    function setupChipsRating(groupId) {
+      document.getElementById(groupId).querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wasOn = btn.classList.contains('on');
+          document.getElementById(groupId).querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+          if (!wasOn) { btn.classList.add('on'); filters.minRating = parseInt(btn.dataset.val) || 0; }
+          else filters.minRating = 0;
+          updateFilterBadge(); render();
+        });
+      });
+    }
+    // Quick capacity
+    document.getElementById('quick-capacity').querySelectorAll('.quick-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('quick-capacity').querySelectorAll('.quick-chip').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        filters.capacity = btn.dataset.val;
+        updateFilterBadge(); render();
+      });
+    });
+
+    setupChipsSingle('chips-status',   'status');
+    setupChipsMulti ('chips-category', 'categories');
+    setupChipsMulti ('chips-price',    'prices');
+    setupChipsMulti ('chips-walk',     'walks');
+    setupChipsMulti ('chips-portion',  'portions');
+    setupChipsRating('chips-rating');
+
+    // ── Search / Sort ────────────────────────────────────────────
+    document.getElementById('search').addEventListener('input', e => {
+      filters.query = e.target.value.trim().toLowerCase(); render();
+    });
+    document.getElementById('sort-select').addEventListener('change', e => {
+      sortKey = e.target.value; render();
+    });
+
+    function applySort(arr) {
+      return [...arr].sort((a, b) => {
+        switch (sortKey) {
+          case 'added-desc':  return (b.addedAt || '').localeCompare(a.addedAt || '');
+          case 'added-asc':   return (a.addedAt || '').localeCompare(b.addedAt || '');
+          case 'name-asc':    return a.name.localeCompare(b.name, 'ja');
+          case 'rating-desc': return (b.rating || 0) - (a.rating || 0);
+          case 'visit-desc':  return (b.visitCount || 0) - (a.visitCount || 0);
+          case 'walk-asc':    return (parseInt(a.walkTime) || 999) - (parseInt(b.walkTime) || 999);
+          case 'walk-desc':   return (parseInt(b.walkTime) || 0)   - (parseInt(a.walkTime) || 0);
+          default: return 0;
+        }
+      });
+    }
+
+    // ── Apply filters (shared) ───────────────────────────────────
+    function applyFilters(list) {
+      return list.filter(item => {
+        if (filters.query) {
+          const menuNames = (item.menus || []).map(m => typeof m === 'string' ? m : m.name).join(' ');
+          const hay = [item.name, item.memo, (item.mains || []).join(' '), menuNames].join(' ').toLowerCase();
+          if (!hay.includes(filters.query)) return false;
+        }
+        if (filters.status === 'visited'    && !item.visited)  return false;
+        if (filters.status === 'unvisited'  &&  item.visited)  return false;
+        if (filters.status === 'bookmarked' && !item.bookmark) return false;
+        if (filters.capacity) {
+          const needed = CAP_ORDER[filters.capacity] || 0;
+          const have   = CAP_ORDER[item.capacity]   || 0;
+          if (have < needed) return false;
+        }
+        if (filters.categories.size > 0 && !filters.categories.has(item.category)) return false;
+        if (filters.prices.size > 0     && !filters.prices.has(item.price))        return false;
+        if (filters.walks.size > 0      && !filters.walks.has(item.walkTime))      return false;
+        if (filters.portions.size > 0   && !filters.portions.has(item.portion))    return false;
+        if (filters.minRating > 0 && (item.rating || 0) < filters.minRating) return false;
+        return true;
+      });
+    }
+
+    // ── Card HTML ────────────────────────────────────────────────
+    function cardHtml(item) {
+      const mainTags = (item.mains || []).map(m => `<span class="tag tag-main">${esc(m)}</span>`).join('');
+      const menus = item.menus || [];
+      const menuRows = menus.map(m => {
+        const name  = typeof m === 'string' ? m : m.name;
+        const price = typeof m === 'object' && m.price != null ? m.price : null;
+        return `<div class="menu-list-row">
+          <span class="menu-list-name">${esc(name)}</span>
+          ${price != null ? `<span class="menu-list-price">¥${price.toLocaleString()}</span>` : ''}
+        </div>`;
+      }).join('');
+
+      const rating = item.rating || 0;
+      const starsHtml = rating > 0
+        ? `<div class="star-row"><span class="star-filled">${'★'.repeat(rating)}</span><span class="star-empty">${'☆'.repeat(5 - rating)}</span></div>`
+        : '';
+
+      const visitMetaHtml = item.visited && (item.visitCount || item.lastVisitedAt)
+        ? `<div class="visit-meta">${item.visitCount ? `<span>🔁 ${item.visitCount}回</span>` : ''}${item.lastVisitedAt ? `<span>📅 ${item.lastVisitedAt}</span>` : ''}</div>`
+        : '';
+
+      const hoursHtml = (item.hours || item.closed)
+        ? `<div class="card-hours">${item.hours ? `🕐 ${esc(item.hours)}` : ''}${item.hours && item.closed ? '　' : ''}${item.closed ? `🚫 ${esc(item.closed)}` : ''}</div>`
+        : '';
+
+      const thumbHtml = item.image
+        ? item.url
+          ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block"><div class="card-thumb"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div></a>`
+          : `<div class="card-thumb"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+        : item.url
+          ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block"><div class="card-placeholder" data-cat="${esc(item.category || '')}">${CAT_EMOJI[item.category] || '🍽'}</div></a>`
+          : `<div class="card-placeholder" data-cat="${esc(item.category || '')}">${CAT_EMOJI[item.category] || '🍽'}</div>`;
+
+      const infoRow = (item.capacity || item.portion)
+        ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+            ${item.capacity ? `<div class="card-capacity">👥 <strong>${esc(item.capacity)}</strong></div>` : ''}
+            ${item.portion === 'heavy' ? `<div class="card-capacity">🍚 <strong>がっつり</strong></div>`
+              : item.portion === 'light' ? `<div class="card-capacity">🥗 <strong>少なめ</strong></div>`
+              : item.portion === 'normal' ? `<div class="card-capacity">🍽 <strong>ふつう</strong></div>` : ''}
+          </div>`
+        : '';
+
+      return `
+        <div class="card${item.visited ? ' is-visited' : ''}" data-id="${item.id}">
+          ${thumbHtml}
+          <div class="cat-bar" data-cat="${esc(item.category || '')}"></div>
+          <div class="card-body">
+            <div class="card-top">
+              <div class="card-badges">
+                ${item.category ? `<span class="badge badge-cat">${esc(CAT_LBL[item.category]||item.category)}</span>` : ''}
+                ${item.price    ? `<span class="badge badge-price">${esc(PRICE_LBL[item.price]||item.price)}</span>` : ''}
+                <span class="badge ${item.visited?'badge-visited':'badge-unvisited'}">${item.visited?'✓ 訪問済み':'未訪問'}</span>
+                ${item.payment==='cash' ? `<span class="badge badge-cash">💴 現金のみ</span>`
+                  : item.payment==='cashless-paypay' ? `<span class="badge badge-cashless">💳 PayPay 可</span>`
+                  : item.payment==='cashless' ? `<span class="badge badge-cashless">💳 キャッシュレス</span>` : ''}
+              </div>
+              <div class="card-top-right">
+                ${item.walkTime ? `<div class="card-walk">🚶 ${item.walkTime==='15+'?'15分以上':item.walkTime+'分'}</div>` : ''}
+                <button class="btn-icon${item.bookmark?' bm-on':''}" title="お気に入り" onclick="event.stopPropagation();toggleBookmark('${item.id}')">
+                  ${item.bookmark ? '⭐' : '☆'}
+                </button>
+              </div>
+            </div>
+            <div class="card-name">${esc(item.name)}</div>
+            ${starsHtml}
+            ${visitMetaHtml}
+            ${infoRow}
+            ${hoursHtml}
+            ${mainTags ? `<div class="tags-row">${mainTags}</div>` : ''}
+            ${menuRows ? `<div class="menu-list-card"><div class="menu-list-label">食べたメニュー</div>${menuRows}</div>` : ''}
+            <div class="card-memo" contenteditable="true" data-placeholder="メモを追加..." onclick="event.stopPropagation()" onblur="saveMemo('${item.id}',this)" onkeydown="if(event.key==='Escape')this.blur()">${esc(item.memo||'')}</div>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <label class="visit-check">
+                <input type="checkbox" ${item.visited?'checked':''} onchange="toggleVisited('${item.id}')">
+                <span class="check-box"></span>
+                <span class="check-label">訪問済み</span>
+              </label>
+              <div class="card-icon-btns">
+                <button class="btn-icon" title="編集" onclick="openEditModal('${item.id}')">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/><line x1="9" y1="4.5" x2="11.5" y2="7"/></svg>
+                </button>
+                <button class="btn-icon danger" title="削除" onclick="deleteItem('${item.id}')">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="2,4 14,4"/><path d="M5 4V2h6v2"/><path d="M3 4l1 10h8l1-10"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Render ───────────────────────────────────────────────────
+    function render() {
+      document.getElementById('stat-total').textContent   = items.length;
+      document.getElementById('stat-visited').textContent = items.filter(i => i.visited).length;
+      const sorted = applySort(applyFilters(items));
+      const grid   = document.getElementById('grid');
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty"><div class="empty-icon">🍱</div><h2>まだお店がありません</h2><p>右下の ＋ ボタンからお気に入りのお店を追加しよう！</p></div>`;
+        return;
+      }
+      grid.innerHTML = sorted.length
+        ? sorted.map(cardHtml).join('')
+        : `<div class="no-results">条件に一致するお店がありませんでした<br><span style="font-size:0.78rem">絞り込み条件を変えてみてください</span></div>`;
+    }
+
+    // ── saveMemo ─────────────────────────────────────────────────
+    function saveMemo(id, el) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const v = el.innerText.trim();
+      if (item.memo !== v) { item.memo = v; persist(); }
+    }
+
+    // ── Toggle visited ───────────────────────────────────────────
+    function toggleVisited(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.visited = !item.visited;
+      if (item.visited) {
+        item.visitCount = (item.visitCount || 0) + 1;
+        item.lastVisitedAt = todayStr();
+      }
+      persist(); render();
+      toast(item.visited ? `訪問済みにしました（${item.visitCount}回目）` : '未訪問に戻しました');
+    }
+
+    // ── Toggle bookmark ──────────────────────────────────────────
+    function toggleBookmark(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.bookmark = !item.bookmark;
+      persist(); render();
+      toast(item.bookmark ? '⭐ お気に入りに追加' : 'お気に入りを解除');
+    }
+
+    // ── Delete ───────────────────────────────────────────────────
+    function deleteItem(id) {
+      const item = items.find(i => i.id === id);
+      showConfirm(`「${item?.name||'このお店'}」を削除しますか？`, () => {
+        items = items.filter(i => i.id !== id);
+        persist(); render(); toast('削除しました');
+      });
+    }
+
+    // ── Random ───────────────────────────────────────────────────
+    let randomPool = [], lastRandomId = null;
+    const WEEKDAYS = ['日','月','火','水','木','金','土'];
+    function todayDayName() { return WEEKDAYS[new Date().getDay()]; }
+    function filterClosed(list) {
+      const today = todayDayName();
+      return list.filter(item => {
+        if (!item.closed) return true;
+        return !item.closed.split('・').includes(today);
+      });
+    }
+
+    function showRandom() {
+      randomPool = filterClosed(applyFilters(items));
+      if (!randomPool.length) { toast('本日営業中のお店がありません'); return; }
+      lastRandomId = null;
+      pickRandom();
+      document.getElementById('random-overlay').classList.add('open');
+    }
+    function closeRandom() { document.getElementById('random-overlay').classList.remove('open'); }
+    function rerollRandom() {
+      randomPool = filterClosed(applyFilters(items));
+      if (!randomPool.length) { toast('本日営業中のお店がありません'); closeRandom(); return; }
+      pickRandom();
+    }
+    function pickRandom() {
+      let pool = randomPool.filter(i => i.id !== lastRandomId);
+      if (!pool.length) pool = randomPool;
+      const item = pool[Math.floor(Math.random() * pool.length)];
+      lastRandomId = item.id;
+      const rStars = item.rating
+        ? [1,2,3,4,5].map(i => `<span style="color:${i<=item.rating?'var(--accent)':'var(--border-h)'}">★</span>`).join('')
+        : '';
+      document.getElementById('random-content').innerHTML = `
+        ${item.image
+          ? item.url
+            ? `<a href="${esc(item.url)}" target="_blank" rel="noopener"><img class="random-img" src="${esc(item.image)}" onerror="this.style.display='none'" style="cursor:pointer"></a>`
+            : `<img class="random-img" src="${esc(item.image)}" onerror="this.style.display='none'">`
+          : ''}
+        <div class="random-name">${esc(item.name)}${item.url ? ` <a href="${esc(item.url)}" target="_blank" rel="noopener" style="font-size:0.7rem;color:var(--accent);text-decoration:none;vertical-align:middle">↗</a>` : ''}</div>
+        ${rStars ? `<div class="random-stars">${rStars}</div>` : ''}
+        <div class="random-badges">
+          ${item.category ? `<span class="badge badge-cat">${esc(CAT_LBL[item.category]||item.category)}</span>` : ''}
+          ${item.price ? `<span class="badge badge-price">${esc(PRICE_LBL[item.price]||item.price)}</span>` : ''}
+          ${item.walkTime ? `<span class="badge badge-unvisited">🚶 ${item.walkTime==='15+'?'15分以上':item.walkTime+'分'}</span>` : ''}
+          ${item.capacity ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--muted)">👥 ${esc(item.capacity)}</span>` : ''}
+          ${item.portion==='heavy' ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--muted)">🍚 がっつり</span>`
+            : item.portion==='light' ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--muted)">🥗 少なめ</span>`
+            : item.portion==='normal' ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--muted)">🍽 ふつう</span>` : ''}
+        </div>
+        ${item.hours || item.closed ? `<div style="font-size:0.75rem;color:var(--muted);text-align:center;margin-bottom:6px">${item.hours?`🕐 ${esc(item.hours)}`:''}${item.hours&&item.closed?' 　':''}${item.closed?`🚫 ${esc(item.closed)}`:''}</div>` : ''}
+        ${item.memo ? `<div class="random-memo">${esc(item.memo)}</div>` : ''}
+      `;
+    }
+
+    // ── Tag input ────────────────────────────────────────────────
+    const modalTags = {};
+    function addTag(containerId, inputId) {
+      const input = document.getElementById(inputId);
+      const val   = input.value.trim();
+      if (!val) return;
+      if (!modalTags[containerId]) modalTags[containerId] = [];
+      val.split(/[、,，\s]+/).map(v => v.trim()).filter(Boolean).forEach(v => {
+        if (!modalTags[containerId].includes(v)) modalTags[containerId].push(v);
+      });
+      input.value = '';
+      renderTagsEdit(containerId);
+    }
+    function removeTag(containerId, idx) {
+      if (!modalTags[containerId]) return;
+      modalTags[containerId].splice(idx, 1);
+      renderTagsEdit(containerId);
+    }
+    function renderTagsEdit(containerId) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = (modalTags[containerId] || []).map((v, i) =>
+        `<span class="tag-edit">${esc(typeof v==='string'?v:v.name)}<button class="tag-rm" onclick="removeTag('${containerId}',${i})" type="button">×</button></span>`
+      ).join('');
+    }
+    function addMenu(containerId, nameId, priceId) {
+      const nameEl  = document.getElementById(nameId);
+      const priceEl = document.getElementById(priceId);
+      const name = nameEl.value.trim();
+      if (!name) return;
+      const price = priceEl.value !== '' ? parseInt(priceEl.value) : null;
+      if (!modalTags[containerId]) modalTags[containerId] = [];
+      modalTags[containerId].push({ name, price });
+      nameEl.value = ''; priceEl.value = '';
+      renderMenuEdit(containerId);
+    }
+    function removeMenu(containerId, idx) {
+      if (!modalTags[containerId]) return;
+      modalTags[containerId].splice(idx, 1);
+      renderMenuEdit(containerId);
+    }
+    function renderMenuEdit(containerId) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = (modalTags[containerId] || []).map((m, i) => {
+        const name  = typeof m === 'string' ? m : m.name;
+        const price = typeof m === 'object' && m.price != null ? m.price : null;
+        return `<div class="menu-edit-row">
+          <span class="menu-edit-name">${esc(name)}</span>
+          ${price!=null?`<span class="menu-edit-price">¥${price.toLocaleString()}</span>`:''}
+          <button class="tag-rm" onclick="removeMenu('${containerId}',${i})" type="button">×</button>
+        </div>`;
+      }).join('');
+    }
+
+    // Enter key handlers
+    ['add-main-input','edit-main-input'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.isComposing) {
+          e.preventDefault();
+          addTag({'add-main-input':'add-mains','edit-main-input':'edit-mains'}[id], id);
+        }
+      });
+    });
+    document.getElementById('add-menu-input')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addMenu('add-menus','add-menu-input','add-menu-price'); }
+    });
+    document.getElementById('edit-menu-input')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addMenu('edit-menus','edit-menu-input','edit-menu-price'); }
+    });
+
+    // ── Pill group ───────────────────────────────────────────────
+    // Single-select pill group
+    function setupPills(groupId) {
+      document.getElementById(groupId).querySelectorAll('.pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wasOn = btn.classList.contains('on');
+          document.getElementById(groupId).querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
+          if (!wasOn) btn.classList.add('on');
+        });
+      });
+    }
+    ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment',
+     'edit-category','edit-price','edit-capacity','edit-walk','edit-portion','edit-payment'].forEach(setupPills);
+
+    // Multi-select pill group (定休日)
+    function setupPillsMulti(groupId) {
+      document.getElementById(groupId).querySelectorAll('.pill').forEach(btn => {
+        btn.addEventListener('click', () => btn.classList.toggle('on'));
+      });
+    }
+    setupPillsMulti('add-closed');
+    setupPillsMulti('edit-closed');
+
+    function getPill(groupId) {
+      return document.getElementById(groupId)?.querySelector('.pill.on')?.dataset.val || '';
+    }
+    function setPill(groupId, val) {
+      document.getElementById(groupId)?.querySelectorAll('.pill').forEach(b =>
+        b.classList.toggle('on', b.dataset.val === val)
+      );
+    }
+    // 定休日 multi-select helpers
+    function getClosedDays(groupId) {
+      const vals = [];
+      document.getElementById(groupId)?.querySelectorAll('.pill.on').forEach(b => vals.push(b.dataset.val));
+      return vals.length ? vals.join('・') : '';
+    }
+    function setClosedDays(groupId, val) {
+      const days = val ? val.split('・') : [];
+      document.getElementById(groupId)?.querySelectorAll('.pill').forEach(b =>
+        b.classList.toggle('on', days.includes(b.dataset.val))
+      );
+    }
+
+    // ── Star rating input ────────────────────────────────────────
+    function setupStarInput(groupId) {
+      const el = document.getElementById(groupId);
+      if (!el) return;
+      const btns = [...el.querySelectorAll('.star-btn')];
+      btns.forEach(btn => {
+        // hover preview
+        btn.addEventListener('mouseenter', () => {
+          const hv = parseInt(btn.dataset.val);
+          btns.forEach(b => b.classList.toggle('on', parseInt(b.dataset.val) <= hv));
+        });
+        // click commits
+        btn.addEventListener('click', () => {
+          const val = parseInt(btn.dataset.val);
+          const cur = parseInt(el.dataset.rating || 0);
+          const next = cur === val ? 0 : val;
+          el.dataset.rating = next;
+          setStarRating(groupId, next);
+        });
+      });
+      // revert preview on mouse leave
+      el.addEventListener('mouseleave', () => {
+        setStarRating(groupId, parseInt(el.dataset.rating || 0));
+      });
+    }
+    function getStarRating(groupId) {
+      return parseInt(document.getElementById(groupId)?.dataset.rating || 0);
+    }
+    function setStarRating(groupId, val) {
+      const el = document.getElementById(groupId);
+      if (!el) return;
+      el.dataset.rating = val;
+      el.querySelectorAll('.star-btn').forEach(b =>
+        b.classList.toggle('on', parseInt(b.dataset.val) <= val)
+      );
+    }
+    setupStarInput('add-rating');
+    setupStarInput('edit-rating');
+
+    // ── Export / Import ──────────────────────────────────────────
+    function exportData() {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `lunchlog_${todayStr()}.json`; a.click();
+      URL.revokeObjectURL(url);
+      toast('エクスポートしました');
+    }
+    function importData(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) throw new Error();
+          const existingIds = new Set(items.map(i => i.id));
+          const newItems = parsed.filter(i => i.id && !existingIds.has(i.id));
+          items = [...items, ...newItems];
+          persist(); render();
+          toast(newItems.length ? `${newItems.length}件をインポートしました` : 'すでに同じデータが存在します');
+        } catch { toast('ファイルの読み込みに失敗しました'); }
+        input.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    // ── Add Modal ────────────────────────────────────────────────
+    function openAddModal() {
+      ['add-name','add-url','add-img','add-memo','add-hours'].forEach(id =>
+        document.getElementById(id).value = ''
+      );
+      document.getElementById('add-img-group').style.display = 'none';
+      document.getElementById('add-visited').checked  = false;
+      document.getElementById('add-bookmark').checked = false;
+      ['add-category','add-price','add-capacity','add-walk','add-portion','add-payment','add-closed'].forEach(id =>
+        document.getElementById(id).querySelectorAll('.pill').forEach(b => b.classList.remove('on'))
+      );
+      setStarRating('add-rating', 0);
+      modalTags['add-mains'] = []; modalTags['add-menus'] = [];
+      renderTagsEdit('add-mains'); renderMenuEdit('add-menus');
+      document.getElementById('add-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('add-name').focus(), 50);
+    }
+    function closeAddModal() { document.getElementById('add-overlay').classList.remove('open'); }
+
+    document.getElementById('add-save').addEventListener('click', () => {
+      const name = document.getElementById('add-name').value.trim();
+      if (!name) { toast('店名は必須です'); return; }
+      const visited = document.getElementById('add-visited').checked;
+      const item = {
+        id:           crypto.randomUUID(),
+        name,
+        url:          document.getElementById('add-url').value.trim(),
+        image:        document.getElementById('add-img').value.trim(),
+        category:     getPill('add-category'),
+        price:        getPill('add-price'),
+        capacity:     getPill('add-capacity'),
+        walkTime:     getPill('add-walk'),
+        portion:      getPill('add-portion'),
+        payment:      getPill('add-payment'),
+        rating:       getStarRating('add-rating') || null,
+        hours:        document.getElementById('add-hours').value.trim(),
+        closed:       getClosedDays('add-closed'),
+        mains:        [...(modalTags['add-mains'] || [])],
+        menus:        [...(modalTags['add-menus'] || [])],
+        memo:         document.getElementById('add-memo').value.trim(),
+        visited,
+        visitCount:   visited ? 1 : 0,
+        lastVisitedAt: visited ? todayStr() : null,
+        bookmark:     document.getElementById('add-bookmark').checked,
+        addedAt:      todayStr(),
+      };
+      items.push(item);
+      persist(); render(); closeAddModal();
+      toast('追加しました');
+    });
+
+    // ── Edit Modal ───────────────────────────────────────────────
+    let editTarget = null;
+    function openEditModal(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      editTarget = id;
+      document.getElementById('edit-name').value   = item.name    || '';
+      document.getElementById('edit-url').value    = item.url     || '';
+      document.getElementById('edit-img').value    = item.image   || '';
+      document.getElementById('edit-memo').value   = item.memo    || '';
+      document.getElementById('edit-hours').value        = item.hours   || '';
+      document.getElementById('edit-visit-count').value  = item.visitCount || 0;
+      document.getElementById('edit-last-visited').value = item.lastVisitedAt || '';
+      document.getElementById('edit-bookmark').checked   = !!item.bookmark;
+      setClosedDays('edit-closed', item.closed || '');
+      setPill('edit-category', item.category || '');
+      setPill('edit-price',    item.price    || '');
+      setPill('edit-capacity', item.capacity || '');
+      setPill('edit-walk',     item.walkTime || '');
+      setPill('edit-portion',  item.portion  || '');
+      setPill('edit-payment',  item.payment  || '');
+      setStarRating('edit-rating', item.rating || 0);
+      modalTags['edit-mains'] = [...(item.mains || [])];
+      modalTags['edit-menus'] = [...(item.menus || [])];
+      renderTagsEdit('edit-mains');
+      renderMenuEdit('edit-menus');
+      document.getElementById('edit-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('edit-name').focus(), 50);
+    }
+    function closeEditModal() {
+      document.getElementById('edit-overlay').classList.remove('open');
+      editTarget = null;
+    }
+
+    document.getElementById('edit-save').addEventListener('click', () => {
+      const item = items.find(i => i.id === editTarget);
+      if (!item) return;
+      const name = document.getElementById('edit-name').value.trim();
+      if (!name) { toast('店名は必須です'); return; }
+      item.name     = name;
+      item.url      = document.getElementById('edit-url').value.trim();
+      item.image    = document.getElementById('edit-img').value.trim();
+      item.category = getPill('edit-category');
+      item.price    = getPill('edit-price');
+      item.capacity = getPill('edit-capacity');
+      item.walkTime = getPill('edit-walk');
+      item.portion  = getPill('edit-portion');
+      item.payment  = getPill('edit-payment');
+      item.rating   = getStarRating('edit-rating') || null;
+      item.hours         = document.getElementById('edit-hours').value.trim();
+      item.closed        = getClosedDays('edit-closed');
+      item.visitCount    = parseInt(document.getElementById('edit-visit-count').value) || 0;
+      item.lastVisitedAt = document.getElementById('edit-last-visited').value || null;
+      item.mains         = [...(modalTags['edit-mains'] || [])];
+      item.menus         = [...(modalTags['edit-menus'] || [])];
+      item.memo          = document.getElementById('edit-memo').value.trim();
+      item.bookmark      = document.getElementById('edit-bookmark').checked;
+      persist(); render(); closeEditModal();
+      toast('保存しました');
+    });
+
+    // ── PWA Icon ─────────────────────────────────────────────────
+    (() => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 180;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 180, 180);
+      ctx.font = `${Math.floor(180*0.72)}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🍱', 90, 90);
+      const link = document.createElement('link');
+      link.rel = 'apple-touch-icon'; link.href = c.toDataURL('image/png');
+      document.head.appendChild(link);
+    })();
+
+    // ── URL → OGP 自動取得 ───────────────────────────────────────
+    document.getElementById('add-url').addEventListener('blur', async () => {
+      const url = document.getElementById('add-url').value.trim();
+      if (!url) return;
+      const nameEl = document.getElementById('add-name');
+      const imgEl  = document.getElementById('add-img');
+      const imgGrp = document.getElementById('add-img-group');
+      if (nameEl.value && imgEl.value) return;
+      nameEl.placeholder = '取得中...';
+      const { title, image } = await fetchOGP(url);
+      nameEl.placeholder = '例: 焼肉ランチ 山田';
+      if (title && !nameEl.value) nameEl.value = title;
+      if (image && !imgEl.value) { imgEl.value = image; imgGrp.style.display = ''; }
+    });
+
+    // ── Init ─────────────────────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
