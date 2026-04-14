@@ -156,9 +156,7 @@
     .menu-edit-price { font-size: 0.8rem; color: var(--green); white-space: nowrap; }
     .menu-added-list { margin-top: 6px; min-height: 10px; }
 
-    .card-memo { font-size: 0.74rem; color: var(--muted); line-height: 1.55; margin-top: auto; padding: 8px 0 0; outline: none; cursor: text; border-radius: 4px; min-height: 1.5em; max-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; transition: background 0.15s; }
-    .card-memo:empty::before { content: attr(data-placeholder); color: var(--muted); opacity: 0.35; pointer-events: none; }
-    .card-memo:focus { background: rgba(255,255,255,0.04); padding: 5px 7px; margin: 8px -7px 0; }
+    .card-memo { font-size: 0.74rem; color: var(--muted); line-height: 1.55; margin-top: auto; padding: 8px 0 0; max-height: 60px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
 
     /* Card actions */
     .card-actions { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--border); margin-top: 10px; gap: 4px; }
@@ -186,7 +184,10 @@
     .modal { background: var(--surface-h); border: 1px solid var(--border-h); border-radius: 16px 16px 0 0; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 24px 20px 32px; transform: translateY(40px); transition: transform 0.25s cubic-bezier(.22,1,.36,1); }
     @media (min-width: 600px) { .modal { border-radius: 16px; transform: scale(0.97); } }
     .overlay.open .modal { transform: translateY(0) scale(1); }
-    .modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 20px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 1.05rem; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 1.25rem; cursor: pointer; padding: 2px 4px; line-height: 1; border-radius: 4px; transition: color 0.15s; }
+    .modal-close:hover { color: var(--text); }
     .form-group { margin-bottom: 15px; }
     .form-label { display: block; font-size: 0.73rem; color: var(--muted); margin-bottom: 6px; }
     .form-input { width: 100%; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.15s; }
@@ -258,8 +259,8 @@
       /* 1カラム水平カードレイアウト */
       .grid { grid-template-columns: 1fr; gap: 8px; }
       .card { flex-direction: row; align-items: stretch; }
-      .card-thumb { width: 88px; height: 88px; aspect-ratio: unset; flex-shrink: 0; border-radius: 0; }
-      .card-placeholder { width: 88px; height: 88px; flex-shrink: 0; border-radius: 0; font-size: 2rem; }
+      .card-thumb { width: 88px; min-height: 88px; aspect-ratio: unset; flex-shrink: 0; border-radius: 0; }
+      .card-placeholder { width: 88px; min-height: 88px; flex-shrink: 0; border-radius: 0; font-size: 2rem; }
       .cat-bar { display: none; }
       .card-content { flex: 1; min-width: 0; }
       .card-body { padding: 7px 10px 0; }
@@ -339,6 +340,7 @@
           <option value="last-visit-desc">最近訪問（新しい順）</option>
           <option value="walk-asc">徒歩：近い順</option>
           <option value="walk-desc">徒歩：遠い順</option>
+          <option value="unvisited-first">未訪問優先</option>
         </select>
       </div>
       <!-- Quick capacity -->
@@ -353,11 +355,14 @@
           <button class="quick-chip" data-val="4人以上可">5人〜</button>
         </div>
       </div>
-      <button class="filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="14" height="14"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
-        絞り込み
-        <span class="filter-badge" id="filter-badge">0</span>
-      </button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="14" height="14"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+          絞り込み
+          <span class="filter-badge" id="filter-badge">0</span>
+        </button>
+        <button id="filter-reset-btn" onclick="resetFilters()" style="display:none;padding:9px 12px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:color 0.15s,border-color 0.15s">× リセット</button>
+      </div>
       <div class="filter-panel" id="filter-panel">
         <div class="filter-row">
           <span class="filter-label">状態</span>
@@ -438,7 +443,10 @@
   <!-- Add Modal -->
   <div class="overlay" id="add-overlay" onclick="if(event.target===this)closeAddModal()">
     <div class="modal">
-      <div class="modal-title">お店を追加</div>
+      <div class="modal-header">
+        <div class="modal-title">お店を追加</div>
+        <button class="modal-close" onclick="closeAddModal()">✕</button>
+      </div>
       <div class="form-group">
         <label class="form-label">店名 *</label>
         <input class="form-input" id="add-name" placeholder="例: 焼肉ランチ 山田">
@@ -582,7 +590,10 @@
   <!-- Edit Modal -->
   <div class="overlay" id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
     <div class="modal">
-      <div class="modal-title">編集</div>
+      <div class="modal-header">
+        <div class="modal-title">編集</div>
+        <button class="modal-close" onclick="closeEditModal()">✕</button>
+      </div>
       <div class="form-group">
         <label class="form-label">店名 *</label>
         <input class="form-input" id="edit-name" placeholder="店名">
@@ -781,7 +792,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-15b';
+    const APP_VERSION = '2026-04-15c';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -848,6 +859,24 @@
     let sortKey = 'added-desc';
     let filterOpen = false;
 
+    // ── Relative date ────────────────────────────────────────────
+    function relativeDate(dateStr) {
+      if (!dateStr) return '';
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const days = Math.floor(diff / 86400000);
+      if (days === 0) return '今日';
+      if (days === 1) return '昨日';
+      if (days < 7)   return `${days}日前`;
+      if (days < 30)  return `${Math.floor(days / 7)}週間前`;
+      if (days < 365) return `${Math.floor(days / 30)}ヶ月前`;
+      return `${Math.floor(days / 365)}年前`;
+    }
+
+    // ── Scroll lock ──────────────────────────────────────────────
+    function lockScroll(lock) {
+      document.body.style.overflow = lock ? 'hidden' : '';
+    }
+
     // ── Toast ────────────────────────────────────────────────────
     let toastTimer;
     function toast(msg) {
@@ -863,20 +892,24 @@
     function showConfirm(msg, onOk) {
       document.getElementById('confirm-msg').textContent = msg;
       document.getElementById('confirm-overlay').classList.add('open');
+      lockScroll(true);
       confirmCallback = onOk;
     }
     document.getElementById('confirm-cancel').addEventListener('click', () => {
       document.getElementById('confirm-overlay').classList.remove('open');
+      lockScroll(false);
       confirmCallback = null;
     });
     document.getElementById('confirm-ok').addEventListener('click', () => {
       document.getElementById('confirm-overlay').classList.remove('open');
+      lockScroll(false);
       if (confirmCallback) confirmCallback();
       confirmCallback = null;
     });
     document.getElementById('confirm-overlay').addEventListener('click', e => {
       if (e.target === e.currentTarget) {
         document.getElementById('confirm-overlay').classList.remove('open');
+        lockScroll(false);
         confirmCallback = null;
       }
     });
@@ -910,6 +943,8 @@
       const badge = document.getElementById('filter-badge');
       badge.classList.toggle('show', n > 0);
       badge.textContent = n;
+      const resetBtn = document.getElementById('filter-reset-btn');
+      if (resetBtn) resetBtn.style.display = n > 0 ? '' : 'none';
     }
 
     // Single-select chips (status)
@@ -1015,8 +1050,9 @@
           case 'rating-desc': return (b.rating || 0) - (a.rating || 0);
           case 'visit-desc':  return (b.visitCount || 0) - (a.visitCount || 0);
           case 'last-visit-desc': return (b.lastVisitedAt || '').localeCompare(a.lastVisitedAt || '');
-          case 'walk-asc':    return (parseInt(a.walkTime) || 999) - (parseInt(b.walkTime) || 999);
-          case 'walk-desc':   return (parseInt(b.walkTime) || 0)   - (parseInt(a.walkTime) || 0);
+          case 'walk-asc':       return (parseInt(a.walkTime) || 999) - (parseInt(b.walkTime) || 999);
+          case 'walk-desc':      return (parseInt(b.walkTime) || 0)   - (parseInt(a.walkTime) || 0);
+          case 'unvisited-first': return (a.visited ? 1 : 0) - (b.visited ? 1 : 0);
           default: return 0;
         }
       });
@@ -1071,7 +1107,7 @@
       const visitCnt = logs.length || item.visitCount || 0;
       const lastVisit = logs.length ? logs[logs.length-1].date : item.lastVisitedAt;
       const visitMetaHtml = item.visited && (visitCnt || lastVisit)
-        ? `<div class="visit-meta">${visitCnt ? `<span>🔁 ${visitCnt}回</span>` : ''}${lastVisit ? `<span>📅 ${lastVisit}</span>` : ''}</div>`
+        ? `<div class="visit-meta">${visitCnt ? `<span>🔁 ${visitCnt}回</span>` : ''}${lastVisit ? `<span>📅 ${relativeDate(lastVisit)}</span>` : ''}</div>`
         : '';
 
       const hoursDisp = item.hours ? (item.hours.includes('〜') ? item.hours : item.hours + '〜') : '';
@@ -1128,7 +1164,7 @@
               ${hoursHtml}
               ${mainTags ? `<div class="tags-row">${mainTags}</div>` : ''}
               ${menuRows ? `<div class="menu-list-card"><div class="menu-list-label">食べたメニュー</div>${menuRows}</div>` : ''}
-              <div class="card-memo" contenteditable="true" data-placeholder="メモを追加..." onclick="event.stopPropagation()" onblur="saveMemo('${item.id}',this)" onkeydown="if(event.key==='Escape')this.blur()">${esc(item.memo||'')}</div>
+              ${item.memo ? `<div class="card-memo">${esc(item.memo)}</div>` : ''}
             </div>
             <div class="card-actions" onclick="event.stopPropagation()">
               <label class="visit-check">
@@ -1139,9 +1175,6 @@
               <div class="card-icon-btns">
                 <button class="btn-icon" title="訪問ログ" onclick="openLogModal('${item.id}')">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="2" width="10" height="12" rx="1"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
-                </button>
-                <button class="btn-icon" title="編集" onclick="openEditModal('${item.id}')">
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/><line x1="9" y1="4.5" x2="11.5" y2="7"/></svg>
                 </button>
                 <button class="btn-icon danger" title="削除" onclick="deleteItem('${item.id}')">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="2,4 14,4"/><path d="M5 4V2h6v2"/><path d="M3 4l1 10h8l1-10"/></svg>
@@ -1240,12 +1273,13 @@
     }
     function showRandom() {
       document.getElementById('random-overlay').classList.add('open');
+      lockScroll(true);
       randomPool = applyRandomCrowdFilter(filterClosed(applyFilters(items)));
       if (!randomPool.length) { document.getElementById('random-content').innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0">条件に合うお店がありません</p>'; return; }
       lastRandomId = null;
       pickRandom();
     }
-    function closeRandom() { document.getElementById('random-overlay').classList.remove('open'); }
+    function closeRandom() { document.getElementById('random-overlay').classList.remove('open'); lockScroll(false); }
     function rerollRandom() {
       randomPool = applyRandomCrowdFilter(filterClosed(applyFilters(items)));
       if (!randomPool.length) { document.getElementById('random-content').innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0">条件に合うお店がありません</p>'; return; }
@@ -1512,9 +1546,10 @@
       modalTags['add-mains'] = []; modalTags['add-menus'] = [];
       renderTagsEdit('add-mains'); renderMenuEdit('add-menus');
       document.getElementById('add-overlay').classList.add('open');
+      lockScroll(true);
       setTimeout(() => document.getElementById('add-name').focus(), 50);
     }
-    function closeAddModal() { document.getElementById('add-overlay').classList.remove('open'); }
+    function closeAddModal() { document.getElementById('add-overlay').classList.remove('open'); lockScroll(false); }
 
     document.getElementById('add-save').addEventListener('click', () => {
       const name = document.getElementById('add-name').value.trim();
@@ -1561,9 +1596,11 @@
       document.getElementById('log-note').value = '';
       renderLogList(item);
       document.getElementById('log-overlay').classList.add('open');
+      lockScroll(true);
     }
     function closeLogModal() {
       document.getElementById('log-overlay').classList.remove('open');
+      lockScroll(false);
       logTarget = null;
     }
     function renderLogList(item) {
@@ -1642,10 +1679,12 @@
       renderTagsEdit('edit-mains');
       renderMenuEdit('edit-menus');
       document.getElementById('edit-overlay').classList.add('open');
+      lockScroll(true);
       setTimeout(() => document.getElementById('edit-name').focus(), 50);
     }
     function closeEditModal() {
       document.getElementById('edit-overlay').classList.remove('open');
+      lockScroll(false);
       editTarget = null;
     }
 
