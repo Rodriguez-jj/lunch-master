@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ランチの申し子">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -124,9 +124,11 @@
     .card-capacity strong { color: var(--text); }
 
     /* Stars on card */
-    .star-row { display: flex; gap: 1px; margin-bottom: 4px; }
+    .star-row { display: flex; gap: 1px; margin-bottom: 4px; align-items: center; }
     .star { font-size: 0.78rem; color: var(--accent); line-height: 1; }
     .star.empty { color: var(--border-h); }
+    .star-filled { color: var(--accent); font-size: 0.85rem; line-height: 1; letter-spacing: 1px; }
+    .star-empty  { color: var(--border-h); font-size: 0.85rem; line-height: 1; letter-spacing: 1px; }
 
     /* Visit meta */
     .visit-meta { font-size: 0.65rem; color: var(--muted); margin-bottom: 5px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -233,12 +235,25 @@
 
     @media (max-width: 600px) {
       .app { padding: 0 12px 100px; }
-      header { padding: 20px 0 0; flex-wrap: wrap; }
-      .fab { bottom: 22px; right: 16px; width: 46px; height: 46px; font-size: 1.4rem; }
+      header { padding: 20px 0 0; flex-wrap: wrap; gap: 10px; }
+      .header-badges { flex-wrap: wrap; }
+      .fab { bottom: 22px; right: 16px; width: 52px; height: 52px; font-size: 1.5rem; }
       .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .card-body { padding: 10px 11px 0; }
       .card-name { font-size: 0.88rem; }
-      .sort-select { width: 100%; }
+      /* Toolbar: search full-width on row 1, random+sort on row 2 */
+      .toolbar-row { flex-wrap: wrap; gap: 8px; }
+      .search-wrap { width: 100%; flex: none; order: 0; }
+      .btn-random { flex: 1; order: 1; min-width: 0; }
+      .sort-select { flex: 2; order: 2; width: auto; min-width: 0; }
+      /* Quick capacity chips */
+      .quick-chip { font-size: 0.78rem; padding: 7px 12px; }
+      /* Larger tap targets */
+      .btn-icon { width: 38px; height: 38px; font-size: 1rem; }
+      .check-box { width: 20px; height: 20px; border-radius: 5px; }
+      .visit-check input:checked + .check-box::after { font-size: 12px; }
+      .visit-check { gap: 8px; font-size: 0.82rem; }
+      .card-actions { padding: 10px 12px; }
     }
   </style>
 </head>
@@ -667,7 +682,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-14c';
+    const APP_VERSION = '2026-04-14d';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -1393,6 +1408,18 @@
     })();
 
     // ── URL → OGP 自動取得 ───────────────────────────────────────
+    function isGoogleMapsUrl(url) {
+      return /google\.com\/maps|maps\.google\.com|goo\.gl\/maps|maps\.app\.goo\.gl/.test(url);
+    }
+    function parseGoogleMapsName(url) {
+      try {
+        const u = new URL(url);
+        const m = u.pathname.match(/\/maps\/place\/([^/@]+)/);
+        if (m) return decodeURIComponent(m[1]).replace(/\+/g, ' ');
+      } catch {}
+      return '';
+    }
+
     document.getElementById('add-url').addEventListener('blur', async () => {
       const url = document.getElementById('add-url').value.trim();
       if (!url) return;
@@ -1400,6 +1427,14 @@
       const imgEl  = document.getElementById('add-img');
       const imgGrp = document.getElementById('add-img-group');
       if (nameEl.value && imgEl.value) return;
+
+      if (isGoogleMapsUrl(url)) {
+        const parsed = parseGoogleMapsName(url);
+        if (parsed && !nameEl.value) nameEl.value = parsed;
+        else if (!nameEl.value) toast('Googleマップは店名を手動で入力してください');
+        return;
+      }
+
       nameEl.placeholder = '取得中...';
       const { title, image } = await fetchOGP(url);
       nameEl.placeholder = '例: 焼肉ランチ 山田';
