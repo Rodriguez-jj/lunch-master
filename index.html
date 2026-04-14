@@ -89,6 +89,7 @@
     /* Card */
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; transition: border-color 0.2s; overflow: hidden; min-width: 0; }
     .card:hover { border-color: var(--border-h); }
+    .card-content { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
     .card.is-visited { border-left: 3px solid var(--green); }
     .card-thumb { width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-h); flex-shrink: 0; }
     .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -238,17 +239,36 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-h); border-radius: 3px; }
 
+    /* Header menu */
+    .h-more-btn { display: none; font-size: 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; width: 34px; height: 34px; cursor: pointer; color: var(--muted); align-items: center; justify-content: center; }
+    .h-more-panel { display: none; position: absolute; top: 100%; right: 0; background: var(--surface-h); border: 1px solid var(--border-h); border-radius: 10px; padding: 6px; z-index: 60; flex-direction: column; gap: 4px; min-width: 150px; }
+    .h-more-panel.open { display: flex; }
+    .h-stat-inline { font-size: 0.72rem; color: var(--muted); display: none; }
+    .h-stat-inline strong { color: var(--text); font-weight: 700; }
+
     @media (max-width: 600px) {
       .app { padding: 0 12px 100px; }
-      header { padding: 20px 0 0; flex-wrap: wrap; gap: 10px; }
-      .header-badges { flex-wrap: wrap; }
+      header { padding: 14px 0 0; flex-wrap: nowrap; align-items: center; gap: 10px; }
+      .header-badges { display: none; }          /* カウントは inline に移動 */
+      .h-stat-inline { display: inline; }
+      .logo p { display: none; }
+      .h-more-btn { display: flex; flex-shrink: 0; }
+      .h-desktop-btns { display: none !important; }
       .fab { bottom: 22px; right: 16px; width: 52px; height: 52px; font-size: 1.5rem; }
-      .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .card-body { padding: 10px 10px 0; }
-      .card-name { font-size: 0.85rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      /* 1カラム水平カードレイアウト */
+      .grid { grid-template-columns: 1fr; gap: 8px; }
+      .card { flex-direction: row; align-items: stretch; }
+      .card-thumb { width: 88px; height: 88px; aspect-ratio: unset; flex-shrink: 0; border-radius: 0; }
+      .card-placeholder { width: 88px; height: 88px; flex-shrink: 0; border-radius: 0; font-size: 2rem; }
+      .cat-bar { display: none; }
+      .card-content { flex: 1; min-width: 0; }
+      .card-body { padding: 7px 10px 0; }
+      .card-name { font-size: 0.9rem; }
       .card-badges { gap: 3px; }
-      .badge { font-size: 0.58rem; padding: 2px 5px; }
-      /* Toolbar: search full-width on row 1, random+sort on row 2 */
+      .badge { font-size: 0.6rem; padding: 2px 5px; }
+      .card-actions { padding: 5px 10px; margin-top: 0; }
+      .card.is-visited { border-left: none; border-top: 3px solid var(--green); }
+      /* Toolbar */
       .toolbar-row { flex-wrap: wrap; gap: 8px; }
       .search-wrap { width: 100%; flex: none; order: 0; }
       .btn-random { flex: 1; order: 1; min-width: 0; }
@@ -256,11 +276,10 @@
       /* Quick capacity chips */
       .quick-chip { font-size: 0.78rem; padding: 7px 12px; }
       /* Larger tap targets */
-      .btn-icon { width: 38px; height: 38px; font-size: 1rem; }
+      .btn-icon { width: 36px; height: 36px; font-size: 1rem; }
       .check-box { width: 20px; height: 20px; border-radius: 5px; }
       .visit-check input:checked + .check-box::after { font-size: 12px; }
       .visit-check { gap: 8px; font-size: 0.82rem; }
-      .card-actions { padding: 10px 12px; }
     }
   </style>
 </head>
@@ -268,7 +287,7 @@
   <div class="app">
     <header>
       <div class="logo">
-        <h1>🍱 ランチの申し子</h1>
+        <h1>🍱 ランチの申し子 <span class="h-stat-inline"><strong id="stat-total-m">0</strong>件・訪問<strong id="stat-visited-m">0</strong></span></h1>
         <p>オフィス近くのランチをコレクション</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
@@ -276,7 +295,7 @@
           <div class="h-badge"><strong id="stat-total">0</strong> 件</div>
           <div class="h-badge hb-visited">訪問済み <strong id="stat-visited">0</strong></div>
         </div>
-        <div style="display:flex;gap:6px">
+        <div class="h-desktop-btns" style="display:flex;gap:6px">
           <button class="btn-header" onclick="exportData()">
             <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v2h10v-2"/></svg>
             エクスポート
@@ -285,9 +304,23 @@
             <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 9V1M4 4l3-3 3 3"/><path d="M2 10v2h10v-2"/></svg>
             インポート
           </button>
-          <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
         </div>
       </div>
+      <!-- モバイル用 ⋯ メニュー -->
+      <div style="position:relative;flex-shrink:0">
+        <button class="h-more-btn" id="h-more-btn" onclick="toggleMoreMenu()">⋯</button>
+        <div class="h-more-panel" id="h-more-panel">
+          <button class="btn-header" style="justify-content:flex-start" onclick="exportData();toggleMoreMenu()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v2h10v-2"/></svg>
+            エクスポート
+          </button>
+          <button class="btn-header" style="justify-content:flex-start" onclick="document.getElementById('import-input').click();toggleMoreMenu()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M7 9V1M4 4l3-3 3 3"/><path d="M2 10v2h10v-2"/></svg>
+            インポート
+          </button>
+        </div>
+      </div>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
     </header>
 
     <div class="toolbar">
@@ -704,10 +737,36 @@
   <div class="overlay" id="random-overlay" onclick="if(event.target===this)closeRandom()">
     <div class="modal" style="max-width:400px">
       <div class="modal-title">🎲 今日のおすすめ</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px">混雑度で絞り込む（複数可）</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap" id="random-crowd-chips">
+          <button class="chip on" data-val="">指定なし</button>
+          <button class="chip on" data-val="low">🟢 ほぼ待ちなし</button>
+          <button class="chip on" data-val="mid">🟡 少々待ちあり</button>
+          <button class="chip on" data-val="high">🔴 ピーク時は厳しい</button>
+        </div>
+      </div>
       <div id="random-content"></div>
-      <button class="btn-reroll" onclick="rerollRandom()">もう一度</button>
+      <button class="btn-reroll" onclick="rerollRandom()">🎲 もう一度</button>
       <div class="modal-actions" style="margin-top:10px">
         <button class="btn-cancel" onclick="closeRandom()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Modal -->
+  <div class="overlay" id="log-overlay" onclick="if(event.target===this)closeLogModal()">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">📋 訪問ログ</div>
+      <div id="log-store-name" style="font-size:0.82rem;color:var(--muted);margin-bottom:14px"></div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="date" class="form-input" id="log-date" style="flex:1;min-width:130px">
+        <input class="form-input" id="log-note" placeholder="何を食べた？（任意）" style="flex:2;min-width:140px">
+        <button class="btn-tag-add" onclick="addLogEntry()">記録</button>
+      </div>
+      <div id="log-list" style="max-height:280px;overflow-y:auto"></div>
+      <div class="modal-actions" style="margin-top:16px">
+        <button class="btn-cancel" onclick="closeLogModal()">閉じる</button>
       </div>
     </div>
   </div>
@@ -716,7 +775,7 @@
 
   <script>
     // ── バージョン管理 ────────────────────────────────────────────
-    const APP_VERSION = '2026-04-14e';
+    const APP_VERSION = '2026-04-14f';
     (() => {
       const stored = localStorage.getItem('lunchlog_app_version');
       if (stored && stored !== APP_VERSION) {
@@ -978,8 +1037,11 @@
         ? `<div class="star-row"><span class="star-filled">${'★'.repeat(rating)}</span><span class="star-empty">${'☆'.repeat(5 - rating)}</span></div>`
         : '';
 
-      const visitMetaHtml = item.visited && (item.visitCount || item.lastVisitedAt)
-        ? `<div class="visit-meta">${item.visitCount ? `<span>🔁 ${item.visitCount}回</span>` : ''}${item.lastVisitedAt ? `<span>📅 ${item.lastVisitedAt}</span>` : ''}</div>`
+      const logs = item.visitLogs || [];
+      const visitCnt = logs.length || item.visitCount || 0;
+      const lastVisit = logs.length ? logs[logs.length-1].date : item.lastVisitedAt;
+      const visitMetaHtml = item.visited && (visitCnt || lastVisit)
+        ? `<div class="visit-meta">${visitCnt ? `<span>🔁 ${visitCnt}回</span>` : ''}${lastVisit ? `<span>📅 ${lastVisit}</span>` : ''}</div>`
         : '';
 
       const hoursDisp = item.hours ? (item.hours.includes('〜') ? item.hours : item.hours + '〜') : '';
@@ -1010,32 +1072,34 @@
         <div class="card${item.visited ? ' is-visited' : ''}" data-id="${item.id}">
           ${thumbHtml}
           <div class="cat-bar" data-cat="${esc(item.category || '')}"></div>
-          <div class="card-body">
-            <div class="card-top">
-              <div class="card-badges">
-                ${item.category ? `<span class="badge badge-cat">${esc(CAT_LBL[item.category]||item.category)}</span>` : ''}
-                ${item.price    ? `<span class="badge badge-price">${esc(PRICE_LBL[item.price]||item.price)}</span>` : ''}
-                <span class="badge ${item.visited?'badge-visited':'badge-unvisited'}">${item.visited?'✓ 訪問済み':'未訪問'}</span>
-                ${crowdHtml}
-                ${item.payment==='cash' ? `<span class="badge badge-cash">💴 現金のみ</span>`
-                  : item.payment==='cashless-paypay' ? `<span class="badge badge-cashless">💳 PayPay 可</span>`
-                  : item.payment==='cashless' ? `<span class="badge badge-cashless">💳 キャッシュレス</span>` : ''}
+          <div class="card-content">
+            <div class="card-body">
+              <div class="card-top">
+                <div class="card-badges">
+                  ${item.category ? `<span class="badge badge-cat">${esc(CAT_LBL[item.category]||item.category)}</span>` : ''}
+                  ${item.price    ? `<span class="badge badge-price">${esc(PRICE_LBL[item.price]||item.price)}</span>` : ''}
+                  <span class="badge ${item.visited?'badge-visited':'badge-unvisited'}">${item.visited?'✓ 訪問済み':'未訪問'}</span>
+                  ${crowdHtml}
+                  ${item.payment==='cash' ? `<span class="badge badge-cash">💴 現金のみ</span>`
+                    : item.payment==='cashless-paypay' ? `<span class="badge badge-cashless">💳 PayPay 可</span>`
+                    : item.payment==='cashless' ? `<span class="badge badge-cashless">💳 キャッシュレス</span>` : ''}
+                </div>
+                <div class="card-top-right">
+                  ${item.walkTime ? `<div class="card-walk">🚶 ${item.walkTime==='15+'?'15分以上':item.walkTime+'分'}</div>` : ''}
+                  <button class="btn-icon${item.bookmark?' bm-on':''}" title="お気に入り" onclick="event.stopPropagation();toggleBookmark('${item.id}')">
+                    ${item.bookmark ? '⭐' : '☆'}
+                  </button>
+                </div>
               </div>
-              <div class="card-top-right">
-                ${item.walkTime ? `<div class="card-walk">🚶 ${item.walkTime==='15+'?'15分以上':item.walkTime+'分'}</div>` : ''}
-                <button class="btn-icon${item.bookmark?' bm-on':''}" title="お気に入り" onclick="event.stopPropagation();toggleBookmark('${item.id}')">
-                  ${item.bookmark ? '⭐' : '☆'}
-                </button>
-              </div>
+              <div class="card-name">${esc(item.name)}</div>
+              ${starsHtml}
+              ${visitMetaHtml}
+              ${infoRow}
+              ${hoursHtml}
+              ${mainTags ? `<div class="tags-row">${mainTags}</div>` : ''}
+              ${menuRows ? `<div class="menu-list-card"><div class="menu-list-label">食べたメニュー</div>${menuRows}</div>` : ''}
+              <div class="card-memo" contenteditable="true" data-placeholder="メモを追加..." onclick="event.stopPropagation()" onblur="saveMemo('${item.id}',this)" onkeydown="if(event.key==='Escape')this.blur()">${esc(item.memo||'')}</div>
             </div>
-            <div class="card-name">${esc(item.name)}</div>
-            ${starsHtml}
-            ${visitMetaHtml}
-            ${infoRow}
-            ${hoursHtml}
-            ${mainTags ? `<div class="tags-row">${mainTags}</div>` : ''}
-            ${menuRows ? `<div class="menu-list-card"><div class="menu-list-label">食べたメニュー</div>${menuRows}</div>` : ''}
-            <div class="card-memo" contenteditable="true" data-placeholder="メモを追加..." onclick="event.stopPropagation()" onblur="saveMemo('${item.id}',this)" onkeydown="if(event.key==='Escape')this.blur()">${esc(item.memo||'')}</div>
             <div class="card-actions" onclick="event.stopPropagation()">
               <label class="visit-check">
                 <input type="checkbox" ${item.visited?'checked':''} onchange="toggleVisited('${item.id}')">
@@ -1043,6 +1107,9 @@
                 <span class="check-label">訪問済み</span>
               </label>
               <div class="card-icon-btns">
+                <button class="btn-icon" title="訪問ログ" onclick="openLogModal('${item.id}')">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="2" width="10" height="12" rx="1"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+                </button>
                 <button class="btn-icon" title="編集" onclick="openEditModal('${item.id}')">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/><line x1="9" y1="4.5" x2="11.5" y2="7"/></svg>
                 </button>
@@ -1057,8 +1124,11 @@
 
     // ── Render ───────────────────────────────────────────────────
     function render() {
-      document.getElementById('stat-total').textContent   = items.length;
-      document.getElementById('stat-visited').textContent = items.filter(i => i.visited).length;
+      const total = items.length, visited = items.filter(i => i.visited).length;
+      document.getElementById('stat-total').textContent   = total;
+      document.getElementById('stat-visited').textContent = visited;
+      document.getElementById('stat-total-m').textContent   = total;
+      document.getElementById('stat-visited-m').textContent = visited;
       const sorted = applySort(applyFilters(items));
       const grid   = document.getElementById('grid');
       if (!items.length) {
@@ -1084,11 +1154,17 @@
       if (!item) return;
       item.visited = !item.visited;
       if (item.visited) {
-        item.visitCount = (item.visitCount || 0) + 1;
-        item.lastVisitedAt = todayStr();
+        if (!item.visitLogs) item.visitLogs = [];
+        const today = todayStr();
+        if (!item.visitLogs.find(l => l.date === today)) {
+          item.visitLogs.push({date: today, note: ''});
+          item.visitLogs.sort((a,b) => a.date.localeCompare(b.date));
+        }
+        item.visitCount = item.visitLogs.length;
+        item.lastVisitedAt = item.visitLogs[item.visitLogs.length - 1].date;
       }
       persist(); render();
-      toast(item.visited ? `訪問済みにしました（${item.visitCount}回目）` : '未訪問に戻しました');
+      toast(item.visited ? `訪問済みにしました（${item.visitCount || 1}回目）` : '未訪問に戻しました');
     }
 
     // ── Toggle bookmark ──────────────────────────────────────────
@@ -1121,17 +1197,27 @@
       });
     }
 
+    function getRandomCrowdSet() {
+      const s = new Set();
+      document.getElementById('random-crowd-chips').querySelectorAll('.chip.on').forEach(b => s.add(b.dataset.val));
+      return s;
+    }
+    function applyRandomCrowdFilter(pool) {
+      const s = getRandomCrowdSet();
+      if (s.size === 0) return pool;
+      return pool.filter(i => s.has(i.crowd || ''));
+    }
     function showRandom() {
-      randomPool = filterClosed(applyFilters(items));
-      if (!randomPool.length) { toast('本日営業中のお店がありません'); return; }
+      document.getElementById('random-overlay').classList.add('open');
+      randomPool = applyRandomCrowdFilter(filterClosed(applyFilters(items)));
+      if (!randomPool.length) { document.getElementById('random-content').innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0">条件に合うお店がありません</p>'; return; }
       lastRandomId = null;
       pickRandom();
-      document.getElementById('random-overlay').classList.add('open');
     }
     function closeRandom() { document.getElementById('random-overlay').classList.remove('open'); }
     function rerollRandom() {
-      randomPool = filterClosed(applyFilters(items));
-      if (!randomPool.length) { toast('本日営業中のお店がありません'); closeRandom(); return; }
+      randomPool = applyRandomCrowdFilter(filterClosed(applyFilters(items)));
+      if (!randomPool.length) { document.getElementById('random-content').innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0">条件に合うお店がありません</p>'; return; }
       pickRandom();
     }
     function pickRandom() {
@@ -1415,6 +1501,7 @@
         menus:        [...(modalTags['add-menus'] || [])],
         memo:         document.getElementById('add-memo').value.trim(),
         visited,
+        visitLogs:    visited ? [{date: todayStr(), note: ''}] : [],
         visitCount:   visited ? 1 : 0,
         lastVisitedAt: visited ? todayStr() : null,
         bookmark:     document.getElementById('add-bookmark').checked,
@@ -1424,6 +1511,70 @@
       persist(); render(); closeAddModal();
       toast('追加しました');
     });
+
+    // ── Visit Log Modal ──────────────────────────────────────────
+    let logTarget = null;
+    function openLogModal(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      logTarget = id;
+      document.getElementById('log-store-name').textContent = item.name;
+      document.getElementById('log-date').value = todayStr();
+      document.getElementById('log-note').value = '';
+      renderLogList(item);
+      document.getElementById('log-overlay').classList.add('open');
+    }
+    function closeLogModal() {
+      document.getElementById('log-overlay').classList.remove('open');
+      logTarget = null;
+    }
+    function renderLogList(item) {
+      const logs = [...(item.visitLogs || [])].reverse();
+      const el = document.getElementById('log-list');
+      if (!logs.length) {
+        el.innerHTML = '<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px 0">まだ記録がありません<br>上から追加できます</p>';
+        return;
+      }
+      el.innerHTML = logs.map((log, ri) => {
+        const idx = logs.length - 1 - ri;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:0.8rem;color:var(--muted);flex-shrink:0">📅 ${log.date}</span>
+          <span style="font-size:0.82rem;flex:1;color:${log.note?'var(--text)':'var(--muted)'}">${esc(log.note || 'メモなし')}</span>
+          <button class="btn-icon danger" onclick="removeLogEntry(${idx})" style="width:30px;height:30px;flex-shrink:0">×</button>
+        </div>`;
+      }).join('');
+    }
+    function addLogEntry() {
+      const item = items.find(i => i.id === logTarget);
+      if (!item) return;
+      const date = document.getElementById('log-date').value;
+      const note = document.getElementById('log-note').value.trim();
+      if (!date) { toast('日付を選択してください'); return; }
+      if (!item.visitLogs) item.visitLogs = [];
+      item.visitLogs.push({date, note});
+      item.visitLogs.sort((a,b) => a.date.localeCompare(b.date));
+      item.visited = true;
+      item.visitCount = item.visitLogs.length;
+      item.lastVisitedAt = item.visitLogs[item.visitLogs.length - 1].date;
+      persist(); render();
+      document.getElementById('log-date').value = todayStr();
+      document.getElementById('log-note').value = '';
+      renderLogList(item);
+      toast('訪問を記録しました！');
+    }
+    function removeLogEntry(idx) {
+      const item = items.find(i => i.id === logTarget);
+      if (!item || !item.visitLogs) return;
+      showConfirm('この訪問記録を削除しますか？', () => {
+        item.visitLogs.splice(idx, 1);
+        item.visitCount = item.visitLogs.length;
+        item.lastVisitedAt = item.visitLogs.length ? item.visitLogs[item.visitLogs.length-1].date : null;
+        item.visited = item.visitLogs.length > 0;
+        persist(); render();
+        renderLogList(item);
+        toast('記録を削除しました');
+      });
+    }
 
     // ── Edit Modal ───────────────────────────────────────────────
     let editTarget = null;
@@ -1535,6 +1686,21 @@
       nameEl.placeholder = '例: 焼肉ランチ 山田';
       if (title && !nameEl.value) nameEl.value = title;
       if (image && !imgEl.value) imgEl.value = image;
+    });
+
+    // ── More menu (mobile) ───────────────────────────────────────
+    function toggleMoreMenu() {
+      document.getElementById('h-more-panel').classList.toggle('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#h-more-btn') && !e.target.closest('#h-more-panel')) {
+        document.getElementById('h-more-panel').classList.remove('open');
+      }
+    });
+
+    // ── Random crowd chips setup ─────────────────────────────────
+    document.getElementById('random-crowd-chips').querySelectorAll('.chip').forEach(btn => {
+      btn.addEventListener('click', () => btn.classList.toggle('on'));
     });
 
     // ── Init ─────────────────────────────────────────────────────
